@@ -8,7 +8,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <style>
-    /* --- フォント定義 --- */
     @font-face {
       font-family: 'BrotherXL';
       src: url('./fonts/Brother_XL_Regular.otf') format('opentype');
@@ -26,7 +25,6 @@
       background-attachment: fixed;
       background-size: cover;
       color: white; 
-      /* ★フォント変更 */
       font-family: 'BrotherXL', sans-serif;
       min-height: 100vh; margin: 0; padding-bottom: 60px;
       touch-action: manipulation;
@@ -43,7 +41,7 @@
     input[type="text"] { 
       font-size: 1.5rem; padding: 15px; text-align: center; width: 80%; max-width: 300px;
       border-radius: 8px; border: none; margin-bottom: 30px; 
-      font-family: 'BrotherXL', sans-serif; /* 入力欄にも適用 */
+      font-family: 'BrotherXL', sans-serif;
     }
     .btn-start { 
       padding: 15px 60px; font-size: 1.3rem; font-weight: bold;
@@ -108,7 +106,7 @@
     }
     .status-badge {
       display: inline-block; padding: 5px 15px; margin-left: 10px;
-      border-radius: 0; /* 角丸なし */
+      border-radius: 0;
       font-size: 1rem; color: white;
       box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
@@ -137,7 +135,7 @@
       border-color: #555 !important;
       color: #aaa !important;
     }
-    .selected-badge { color: #ff5555; font-weight: bold; font-size: 0.75rem; display: none; font-family: sans-serif; /* バッジは読みやすく */ }
+    .selected-badge { color: #ff5555; font-weight: bold; font-size: 0.75rem; display: none; font-family: sans-serif; }
     .list-item.disabled .selected-badge { display: block; }
 
     .bingo-overlay {
@@ -164,7 +162,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 10.0 (Custom Font)</div>
+  <div class="version-tag">Ver 11.0 (New List)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -210,9 +208,39 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
+    
+    // ★新しい画像データに基づくリスト（他は削除済み）
     const candidates = [
-        "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11", "BB1 Hous 1", "BB1 Hous 2", "BB1 DVGT", "BB1 Queen", "BB1 TSFT", "BB1 GRMY 65", "BB2 10s 1", "BB2 10s 2", "BB2 Hit 1", "BB2 Hit 2", "BB2 Hit 3", "BB2 Hit 4", "BB2 Hit 5", "BB2 Hit 6", "BB2 Hit 7", "BB2 Hit 8", "BB2 Hit 9", "BB2 Hit 10", "BB2 Hit 11", "BB2 Hit 12", "BB2 Hit 13", "BB2 Hit 14", "BB2 Hit 15", "BB2 Hit 16", "BB2 Hit 17", "BB2 Hit 18", "BB2 Hit 19", "BB2 Hit 20", "BB2 Hit 21", "BB2 Hit 22", "BB2 Comp 1", "BB2 Comp 2", "BB2 Comp 3", "BB2 Comp 4", "BB2 Comp 5", "BB2 Comp 6", "BB2 90s 1", "BB2 90s 2", "BB2 UPGD 1", "BB2 UPGD 2", "BB2 UPGD 3", "BB2 HH 1", "BB2 HH 2", "BB2 Hous 1", "BB2 Hous 2", "BB2 Hous 3", "BB2 Hous 4", "BB2 Metal 1", "BB2 Metal 2", "BB2 Jazz 1", "BB2 Deep 1", "BB2 Deep 2", "BB2 Deep 3", "BB2 JONAS", "BB2 JUSTIN", "BB2 MDNA", "BB2 MJ 1", "BB2 MJ 2", "BB2 MJ 3", "BB2 MLN 1", "BB2 MLN 2", "BB2 MLN 3", "BB2 Soul 1", "BB2 Soul 2", "BB2 Rock 1", "BB2 Rock 2", "BB2 Movie 1", "BB2 Movie 2", "BB2 MTGX", "BB2 P!NK", "BB2 PTX", "BB2 QOP 1", "BB2 Queen", "BB2 Regg 1", "BB2 Regg 2", "BB2 RHNA", "BB2 SUMR 1", "BB2 SUMR 2", "BB2 Xmas 1", "BB2 Xmas 2", "BB2 Xmas 3", "BB2 BTLS 1", "BB2 BTLS 2", "BB2 BTLS 3", "BB2 ARGD", "BB2 ADELE", "BB2 BEYONCE", "BB2 BRJ", "BB2 BRMS", "BB2 BMLY", "BB2 Avicii", "BB2 DVGT", "BB2 EDM", "BB2 FLG", "BB2 GRDY", "BB2 ZEDD", "BB2 1D", "BB2 BNJV", "BB2 BRIT 2023", "BB2 BRMS 2", "BB2 CDPY", "BB2 CSBW", "BB2 CVHS", "BB2 Dua Lipa", "BB2 EDSR", "BB2 EMINEM", "BB2 FLOB", "BB2 HBHC", "BB2 KYGO", "BB2 LDGG", "BB2 Lizzo", "BB2 MRN5", "BB2 NE-YO", "BB2 USHER", "BB2 USHER 2", "BB2 SMST", "BB2 CDPY 2", "BB2 R&B 1", "BB2 R&B 2", "BB2 3Y-1", "BB2 3Y-2", "BB2 2016", "BB2 2017", "BB2 2018", "BB2 2019", "BB3 Hit 1", "BB3 Hit 2", "BB3 Hit 3", "BB3 Hit 4", "BB3 Hit 5", "BB3 Hit 6", "BB3 UPGD 1", "BB3 Comp 1", "BB3 HH 1", "BB3 HH 2", "BB3 Hous 1", "BB3 Hous 2", "BB3 Hous 3", "BB3 Deep 1", "BB3 Regg 1", "BB3 World 1", "BB3 Soul 1", "BB3 Rock 1", "BB3 Rock 2", "BB3 IRMD", "BEERCYCLE", "BSW Hit 1", "BSW Hit 2", "BSW Hit 3", "BSW Hit 4", "BSW Hit 5", "BSW Hit 6", "BSW Hit 7", "BSW Hit 8", "BSW Hous 1", "BSW Hous 2", "BSW Comp 1", "BSW Comp 2", "BSW Comp 3", "BSW Rock 1", "BSW Soul 1", "BSW Jazz 1", "BSW Regg 1", "BSB 10s 1", "BSB Hit 1", "BSB Hit 2", "BSB Hit 3", "BSB Hit 4", "BSB Hit 5", "BSB Hit 6", "BSB Hit 7", "BSB Hous 1", "BSB Comp 1", "BSB Rock 1", "BSB Deep 1", "BSB Jazz 1", "BSB Regg 1", "BSL Hit 1", "BSL Hit 2", "BSL Hit 3", "BSL Hit 4", "BSL Hit 5", "BSL Hit 6", "BSL Hit 7", "BSL Hit 8", "BSL Hous 1", "BSL Hous 2", "BSL Comp 1", "BSL Rock 1", "BSL Deep 1", "BSL Deep 2", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi HH 1", "BSWi Metal 1", "BSBi Hous 1", "BSBi Hous 2", "SKRILLEX", "FEEL NOW B4", "8th SP", "9th SP 1", "9th SP 2", "10th SP", "FEEL DEEP", "FEEL HIGH", "BSW R&B 1", "FEEL NOW B3", "FEEL NOW B2", "FEEL NOW B1", "FEEL NOW S1", "FEEL NOW S2", "FEEL NOW S3", "FEEL NOW G1", "FEEL NOW G2", "FEEL NOW G3", "BB2 Hous 6", "BSW 10s 1", "BB2 GRMY 66", "L 24 FEEL", "L 24 FREE", "BB1 BRIT 2024", "BB2 Dua Lipa 2", "BSWi BMLY", "BSBi BMLY", "BB1 Hous 3", "BB3 Hous 4", "BB1 NOW 1", "BSL Deep 3", "BB2 10s 3", "L 24 FREE 2", "L 24 FEEL 2", "BB1 Hous 4", "BB2 Xmas 4", "BB2 CHARLI", "BB2 RDMC", "BB2 RHCP", "BB2 JMCF", "BB2 Jeff Beck", "BB2 SIGALA", "BB2 CSBW 2", "BB2 NOW 1", "BSW L&S", "BB1 GRMY 67", "BB2 BRIT 2025", "BB2 LDGG 2", "BB2 NOW 2", "BB2 10s 4", "BSL Deep 4", "BSW Hous 3", "BB2 Hous 7", "BSB HH 2", "L 25 FEEL", "L 25 FREE", "BSWi Hous 4", "L 25 BTM", "BB3 10s 1", "BB1 NOW 2", "BSBi Deep 1", "BB2 Comp 7", "BB1 Hous 5", "BSL R&B 1",
-        "ITS 1", "ITS 2", "ITS 3", "ZEDD MIX"
+      "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
+      "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
+      "BB1 Hous 1", "BB1 Hous 2", "BB1 Hous 3", "BB1 Hous 4", "BB1 Hous 5", "BB1 NOW 1", "BB1 NOW 2", "BB1 Queen", "BB1 TSFT",
+      "FEEL NOW B1", "FEEL NOW B2", "FEEL NOW B3", "FEEL NOW B4", "FEEL NOW G1", "FEEL NOW G2", "FEEL NOW G3", "FEEL NOW S1", "FEEL NOW S2", "FEEL NOW S3",
+      "8th SP", "9th SP 1", "9th SP 2", "10th SP",
+      "BB2 10s 1", "BB2 10s 2", "BB2 10s 3", "BB2 10s 4", "BB2 1D", "BB2 2016", "BB2 2017", "BB2 2018", "BB2 2019", "BB2 3Y-1", "BB2 3Y-2",
+      "BB2 90s 1", "BB2 90s 2", "BB2 ADELE", "BB2 ARGD", "BB2 Avicii", "BB2 BEYONCE", "BB2 BMLY", "BB2 BNJV", "BB2 BRIT 2023", "BB2 BRIT 2025",
+      "BB2 BRJ", "BB2 BRMS", "BB2 BRMS 2", "BB2 BTLS 1", "BB2 BTLS 2", "BB2 BTLS 3", "BB2 CDPY", "BB2 CDPY 2", "BB2 CHARLI",
+      "BB2 Comp 1", "BB2 Comp 2", "BB2 Comp 3", "BB2 Comp 4", "BB2 Comp 5", "BB2 Comp 6", "BB2 Comp 7", "BB2 CSBW", "BB2 CSBW 2", "BB2 CVHS",
+      "BB2 Deep 1", "BB2 Deep 2", "BB2 Deep 3", "BB2 Dua Lipa", "BB2 Dua Lipa 2", "BB2 DVGT", "BB2 EDM",
+      "BB2 EDSR", "BB2 EMINEM", "BB2 FLG", "BB2 FOB", "BB2 GRDY", "BB2 GRMY 66",
+      "BB2 Hit 1", "BB2 Hit 2", "BB2 Hit 3", "BB2 Hit 4", "BB2 Hit 5", "BB2 Hit 6", "BB2 Hit 7", "BB2 Hit 8", "BB2 Hit 9", "BB2 Hit 10",
+      "BB2 Hit 11", "BB2 Hit 12", "BB2 Hit 13", "BB2 Hit 14", "BB2 Hit 15", "BB2 Hit 16", "BB2 Hit 17", "BB2 Hit 18", "BB2 Hit 19", "BB2 Hit 20", "BB2 Hit 21", "BB2 Hit 22",
+      "BB2 HH 1", "BB2 HH 2", "BB2 Hous 1", "BB2 Hous 2", "BB2 Hous 3", "BB2 Hous 4", "BB2 Hous 6", "BB2 Hous 7",
+      "BB2 Jazz 1", "BB2 JONAS", "BB2 JUSTIN", "BB2 KYGO", "BB2 LDGG", "BB2 LDGG 2", "BB2 MDNA", "BB2 MRN5", "BB2 MTGX", "BB2 Metal 1", "BB2 Metal 2",
+      "BB2 MJ 1", "BB2 MJ 2", "BB2 MJ 3", "BB2 MLN 1", "BB2 MLN 2", "BB2 MLN 3", "BB2 Movie 1", "BB2 Movie 2", "BB2 NE-YO", "BB2 NOW 1", "BB2 NOW 2",
+      "BB2 P!NK", "BB2 PTX", "BB2 QOP", "BB2 Queen", "BB2 R&B 1", "BB2 R&B 2", "BB2 Regg 1", "BB2 Regg 2", "BB2 RHCP", "BB2 RHNA", "BB2 Rock 1", "BB2 Rock 2",
+      "BB2 SIGALA", "BB2 SMST", "BB2 Soul 1", "BB2 Soul 2", "BB2 SUMR 1", "BB2 SUMR 2", "BB2 UPGD 1", "BB2 UPGD 2", "BB2 UPGD 3", "BB2 USHER", "BB2 USHER 2",
+      "BB2 Xmas 2", "BB2 Xmas 3", "BB2 Xmas 4", "BB2 ZEDD", "SKRILLEX", "BEERCYCLE", "FEEL DEEP", "FEEL HIGH",
+      "L 25 BTM", "L 25 FEEL", "L 25 FREE",
+      "BB3 10s 1", "BB3 Comp 1", "BB3 Deep 1", "BB3 HH 1", "BB3 HH 2", "BB3 Hit 1", "BB3 Hit 2", "BB3 Hit 3", "BB3 Hit 4", "BB3 Hit 5", "BB3 Hit 6",
+      "BB3 Hous 1", "BB3 Hous 2", "BB3 Hous 3", "BB3 Hous 4", "BB3 IRMD", "BB3 Regg 1", "BB3 Rock 1", "BB3 Rock 2", "BB3 Soul 1", "BB3 UPGD 1", "BB3 World 1",
+      "BSB 10s 1", "BSB Comp 1", "BSB Deep 1", "BSB HH 2", "BSB Hit 1", "BSB Hit 2", "BSB Hit 3", "BSB Hit 4", "BSB Hit 5", "BSB Hit 6", "BSB Hit 7",
+      "BSB Hous 1", "BSB Jazz 1", "BSB Regg 1", "BSB Rock 1", "BSBi BMLY", "BSBi Deep 1", "BSBi Hous 1", "BSBi Hous 2",
+      "L 24 FEEL", "L 24 FEEL 2", "L 24 FREE", "L 24 FREE 2",
+      "BSL Comp 1", "BSL Deep 1", "BSL Deep 2", "BSL Deep 3", "BSL Deep 4", "BSL Hit 1", "BSL Hit 2", "BSL Hit 3", "BSL Hit 4", "BSL Hit 5", "BSL Hit 6", "BSL Hit 7", "BSL Hit 8",
+      "BSL Hous 1", "BSL Hous 2", "BSL R&B 1", "BSL Rock 1",
+      "BSW 10s 1", "BSW Comp 1", "BSW Comp 2", "BSW Comp 3", "BSW Hit 1", "BSW Hit 2", "BSW Hit 3", "BSW Hit 4", "BSW Hit 5", "BSW Hit 6", "BSW Hit 7", "BSW Hit 8",
+      "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
+      "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
     ];
 
     firebase.initializeApp(firebaseConfig);
