@@ -34,7 +34,6 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
 
-    /* 結果表示（クリックで次へ） */
     #result {
       font-size: 9rem; font-weight: bold; margin-bottom: 10px;
       display: inline-block; cursor: pointer;
@@ -43,7 +42,6 @@
     }
     #result:active { transform: scale(0.98); }
 
-    /* QRコード */
     #joinQr {
       width: 220px; height: 220px; margin: 20px auto;
       border: 6px solid white; border-radius: 15px;
@@ -52,7 +50,6 @@
     }
     #joinQr:active { transform: scale(0.95); }
 
-    /* 履歴エリア */
     #historyContainer {
       margin-top: 20px; margin-bottom: 20px;
       font-size: 2.1rem; text-align: center; min-height: 80px;
@@ -60,7 +57,6 @@
     #historyList { list-style: none; padding: 0; margin: 0; }
     #historyList li { margin: 3px; display: inline-block; }
 
-    /* リンクボタン */
     #linkButton {
       position: fixed; left: 30px; bottom: 30px; width: 80px; height: 80px;
       background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);
@@ -69,7 +65,6 @@
     }
     #linkButton:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
 
-    /* リセットボタン */
     #resetButton {
       position: fixed; top: 20px; right: 20px;
       background: rgba(0, 0, 0, 0.5); color: #aaa;
@@ -78,7 +73,6 @@
     }
     #resetButton:hover { background: red; color: white; }
 
-    /* プレイヤー数カウンター（ボタン） */
     #playerCounter {
       position: fixed; top: 20px; left: 20px;
       font-size: 1.5rem; font-weight: bold; color: rgba(255,255,255,0.8);
@@ -88,7 +82,6 @@
     }
     #playerCounter:hover { background: rgba(255, 255, 255, 0.2); color: white; }
 
-    /* --- モーダル共通 --- */
     .modal-overlay {
       display: none; position: fixed; top: 0; left: 0; 
       width: 100%; height: 100%; background: rgba(0,0,0,0.95);
@@ -101,7 +94,6 @@
       color: white; cursor: pointer; border-radius: 30px;
     }
 
-    /* ビンゴ勝者表示 */
     .bingo-text { font-size: 8rem; font-weight: bold; color: #FF3300; margin-bottom: 20px; animation: popIn 0.5s; }
     #winnerListContainer {
       display: flex; flex-direction: column; align-items: center;
@@ -112,31 +104,46 @@
       text-shadow: 0 0 20px #FF9933; animation: slideUp 0.5s ease-out;
     }
 
-    /* 参加者リスト表示 */
-    .player-list-title { font-size: 3rem; font-weight: bold; color: #FF9933; margin-bottom: 20px; }
-    #playerListContent {
-      display: flex; flex-direction: column; align-items: center;
-      max-height: 65vh; overflow-y: auto; width: 80%;
-      border-top: 1px solid #444;
-    }
-    .player-list-item {
-      font-size: 1.8rem; color: #ddd; margin: 0;
-      padding: 10px 20px; width: 100%; text-align: center;
-      border-bottom: 1px solid #333;
-    }
-    /* 勝者強調 */
-    .is-winner {
-      color: #FFFF00; font-weight: bold;
-      background: rgba(255, 215, 0, 0.1);
-      border-bottom: 1px solid #664400;
-    }
-    .rank-badge {
-      display: inline-block; background: #FF3300; color: white;
-      font-size: 1.2rem; padding: 2px 10px; border-radius: 20px; 
-      margin-right: 15px; vertical-align: middle;
-    }
-    .crown { font-size: 1.5rem; margin-left: 10px; }
+    /* ★参加者リスト（タイルデザイン） */
+    .player-list-title { font-size: 3rem; font-weight: bold; color: #FF9933; margin-bottom: 30px; }
     
+    /* グリッドコンテナ */
+    #playerListContent {
+      display: grid; gap: 15px;
+      width: 90%; max-width: 1200px;
+      max-height: 70vh; overflow-y: auto; padding: 20px;
+      /* 初期設定（JSで上書き） */
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* 人数によるレイアウトクラス */
+    .grid-large { grid-template-columns: repeat(3, 1fr) !important; }
+    .grid-medium { grid-template-columns: repeat(4, 1fr) !important; }
+    .grid-small { grid-template-columns: repeat(5, 1fr) !important; }
+
+    /* タイルデザイン */
+    .player-tile {
+      background: #222; border: 1px solid #555; border-radius: 15px;
+      display: flex; justify-content: center; align-items: center;
+      text-align: center; padding: 15px;
+      color: #ddd; font-weight: bold;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+    .player-tile:hover { transform: translateY(-2px); border-color: #888; }
+
+    /* 勝者タイル */
+    .player-tile.is-winner {
+      background: linear-gradient(135deg, #332200, #664400);
+      border: 2px solid #FFD700; color: #FFD700;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    }
+
+    /* フォントサイズ調整（JSでクラス付与） */
+    .font-large { font-size: 2.5rem; height: 100px; }
+    .font-medium { font-size: 1.8rem; height: 80px; }
+    .font-small { font-size: 1.2rem; height: 60px; }
+
     @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
@@ -260,14 +267,12 @@
         }
       });
 
-      // プレイヤー監視
       db.ref('players').on('value', snap => {
         playersData = [];
         snap.forEach(child => playersData.push(child.val()));
         updateCounter();
       });
 
-      // 勝者監視
       db.ref('winners').on('value', snap => {
         winnersData = [];
         snap.forEach(child => winnersData.push(child.val()));
@@ -275,11 +280,9 @@
         updateCounter();
       });
 
-      // 勝者ポップアップ
       db.ref('winners').on('child_added', (snapshot) => {
         const winner = snapshot.val();
         if (winner.timestamp > Date.now() - 10000) {
-            // ★修正: 正しい関数名で呼び出し
             addWinnerPopup(winner.name);
         }
       });
@@ -290,12 +293,26 @@
       playerCounter.textContent = `PLAYERS: ${remaining}`;
     }
 
+    // ★リスト表示機能（タイル版）
     function showPlayerList() {
       const listContainer = document.getElementById('playerListContent');
       listContainer.innerHTML = "";
+      listContainer.className = ""; // クラスリセット
       
-      if(playersData.length === 0) {
-        listContainer.innerHTML = "<div style='color:#999; margin-top:20px;'>参加者はまだいません</div>";
+      // 人数に応じてクラスを切り替え
+      const total = playersData.length;
+      if(total <= 15) {
+        listContainer.classList.add('grid-large'); // 3列
+      } else if(total <= 30) {
+        listContainer.classList.add('grid-medium'); // 4列
+      } else {
+        listContainer.classList.add('grid-small'); // 5列
+      }
+      
+      const fontClass = total <= 15 ? 'font-large' : (total <= 30 ? 'font-medium' : 'font-small');
+
+      if(total === 0) {
+        listContainer.innerHTML = "<div style='color:#999; grid-column: 1 / -1;'>参加者はまだいません</div>";
       } else {
         const winnerRankMap = {};
         winnersData.forEach((w, index) => {
@@ -314,10 +331,11 @@
 
         displayList.forEach(item => {
           const div = document.createElement('div');
-          div.className = 'player-list-item';
+          div.className = `player-tile ${fontClass}`;
+          
           if(item.isWinner) {
              div.classList.add('is-winner');
-             div.innerHTML = `<span class="rank-badge">No.${item.rank}</span> ${item.name} <span class="crown">👑</span>`;
+             div.innerHTML = `<span>👑 No.${item.rank}<br>${item.name}</span>`;
           } else {
              div.textContent = item.name;
           }
@@ -431,7 +449,6 @@
       location.reload();
     }
 
-    // ★修正: ポップアップ用関数名を統一
     function addWinnerPopup(name) {
       const container = document.getElementById('winnerListContainer');
       const modal = document.getElementById('winnerModal');
@@ -442,7 +459,6 @@
       modal.style.display = 'flex';
     }
 
-    // 文字クリックで抽選開始
     resultElement.addEventListener('click', performDraw);
 
     function applyStyle(element, text, isHistoryItem = false) {
