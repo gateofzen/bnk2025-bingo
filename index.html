@@ -162,7 +162,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 12.0 (FEEL NOW White)</div>
+  <div class="version-tag">Ver 13.0 (List Fixed)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -369,7 +369,7 @@
       listContainer.scrollTop = 0;
       
       const filtered = candidates.filter(prog => {
-        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("ITS") || prog === "ZEDD MIX" || prog === "SKRILLEX" || prog === "BEERCYCLE";
+        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("SKRILLEX") || prog === "BEERCYCLE";
         if (genre === "L 24/25") return prog.startsWith("L 24") || prog.startsWith("L 25");
         if (genre === "FEEL") return prog.startsWith("FEEL"); 
         return prog.startsWith(genre);
@@ -468,21 +468,18 @@
         else if (text.includes("FREE")) return '#00121C';
         else if (text.includes("FEEL")) return '#00121C';
         else if (text.includes("SP")) return '#00121C';
-        else if (text.startsWith("ITS") || text === "ZEDD MIX" || text === "SKRILLEX") return 'white';
         else if (text === "BEERCYCLE") return '#7A3202';
+        else if (text === "SKRILLEX") return 'white';
         return 'rgba(34, 34, 34, 0.9)'; 
     }
 
     function getTextColor(text) {
-        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || text.startsWith("BSB") || text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") return 'black';
+        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || text.startsWith("BSB") || text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
         else if (text.startsWith("BSBi")) return '#DEFF66';
         else if (text.startsWith("BSWi")) return '#FFEF7F';
         else if (text.includes("BTM")) return '#BD3EA4';
         else if (text.includes("FREE")) return '#D61C1C';
-        
-        // ★修正: FEEL NOWシリーズは白文字に
         else if (text.startsWith("FEEL NOW")) return 'white';
-        
         else if (text.includes("FEEL")) return '#0761F1';
         return 'white'; 
     }
