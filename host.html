@@ -464,6 +464,10 @@
       else if (text.includes("FEEL DEEP")) { bgColor = 'white'; textColor = 'black'; }
       else if (text.includes("BTM")) { bgColor = '#00121C'; textColor = '#BD3EA4'; }
       else if (text.includes("FREE")) { bgColor = '#00121C'; textColor = '#D61C1C'; }
+      
+      // ★修正: FEEL NOWシリーズは白文字に
+      else if (text.startsWith("FEEL NOW")) { bgColor = '#00121C'; textColor = 'white'; }
+      
       else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
       else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
       else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
