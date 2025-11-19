@@ -40,24 +40,41 @@
     .container {
       text-align: center;
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     /* 結果表示 */
     #result {
       font-size: 9rem;
       font-weight: bold;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       display: inline-block;
       cursor: pointer;
       text-shadow: 0 0 10px rgba(0,0,0,0.5);
       min-height: 1.2em;
+      line-height: 1.2;
+      z-index: 10;
     }
     #result:active { transform: scale(0.98); }
+
+    /* --- QRコードのスタイル (追加) --- */
+    #joinQr {
+      width: 200px;     /* プロジェクターで見やすいサイズ */
+      height: 200px;
+      margin: 10px auto 20px auto;
+      border: 5px solid white; /* 黒背景でも目立つように白枠 */
+      border-radius: 10px;
+      display: block;   /* 初期状態は表示 */
+      box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    }
 
     /* 履歴エリア */
     #historyContainer {
       margin-top: 10px;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       font-size: 2.1rem;
       text-align: center;
       min-height: 80px;
@@ -83,24 +100,15 @@
       transform: scale(1.1);
     }
 
-    /* --- 追加: 左下の隠しリンクボタン --- */
+    /* 左下の隠しリンクボタン */
     #linkButton {
-      position: fixed;
-      left: 30px;
-      bottom: 30px;
-      width: 80px;
-      height: 80px;
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.1); /* 目立たない薄い枠線 */
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      z-index: 1000;
-      display: block;
+      position: fixed; left: 30px; bottom: 30px; width: 80px; height: 80px;
+      background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer; transition: all 0.3s ease; text-decoration: none;
+      z-index: 1000; display: block;
     }
     #linkButton:hover {
-      border-color: rgba(255, 255, 255, 0.3); /* ホバー時に少し見えるように */
-      transform: scale(1.05);
+      border-color: rgba(255, 255, 255, 0.3); transform: scale(1.05);
     }
 
     /* 右上のリセットボタン */
@@ -138,6 +146,8 @@
   <div class="container">
     <p id="result">READY?</p>
     
+    <img id="joinQr" src="./qr-code.png" alt="Join Game" onclick="performDraw()">
+
     <div id="historyContainer">
       <p style="font-size:1rem; margin:0; opacity:0.7;">Past Results:</p>
       <ul id="historyList"></ul>
@@ -210,6 +220,7 @@
 
     // DOM要素
     const resultElement = document.getElementById('result');
+    const qrElement = document.getElementById('joinQr'); // ★QRコード要素
     const drawButton = document.getElementById('drawButton');
     const historyList = document.getElementById('historyList');
 
@@ -223,30 +234,35 @@
 
     // --- 初期化処理 ---
     window.onload = function() {
+      // DBから履歴を復元して、availableCandidatesから削除する
       db.ref('gameState/history').once('value').then(snapshot => {
         const savedHistory = snapshot.val();
         if(savedHistory) {
+          // 履歴の逆順（古い順）で処理して状態を復元
           const reversed = [...savedHistory].reverse();
+          
           reversed.forEach(item => {
-            // リストから削除
             const idx = availableCandidates.indexOf(item);
             if(idx > -1) availableCandidates.splice(idx, 1);
-            
-            // ジャンルロジック復元
             updateGenreLogic(item);
-            
-            // 履歴追加
             addToHistoryUI(item);
           });
 
+          // 最新の結果を表示
           if(savedHistory.length > 0) {
             const latest = savedHistory[0];
             resultElement.textContent = latest;
             applyStyle(resultElement, latest);
+            // ★ゲーム進行中ならQRコードは隠す
+            qrElement.style.display = 'none';
+          } else {
+            // ★履歴がない（最初）ならQRコードを表示
+            qrElement.style.display = 'block';
           }
         }
       });
 
+      // 勝者監視
       db.ref('winners').on('child_added', (snapshot) => {
         const winner = snapshot.val();
         if (winner.timestamp > Date.now() - 10000) {
@@ -255,7 +271,7 @@
       });
     };
 
-    // --- ジャンル判定 ---
+    // --- ジャンル判定ロジック ---
     function getGenre(text) {
       if (text.startsWith("FEEL NOW")) return "FEEL NOW";
       if (text.startsWith("FEEL")) return "FEEL";
@@ -284,15 +300,13 @@
       lastGenre = currentGenre;
     }
 
-    // --- 抽選ロジック (BB2連続2回まで、他は連続NG) ---
+    // --- 抽選ロジック ---
     function drawRandomCandidate() {
       let selectedCandidate;
       let selectedIndex;
       
       if (lastGenre !== null) {
         let needDifferentGenre = false;
-        
-        // ルール適用
         if (lastGenre === "BB2" && sameGenreCount >= 2) {
           needDifferentGenre = true;
         } else if (lastGenre !== "BB2" && sameGenreCount >= 1) {
@@ -322,7 +336,6 @@
       
       availableCandidates.splice(selectedIndex, 1);
       updateGenreLogic(selectedCandidate);
-      
       return selectedCandidate;
     }
 
@@ -333,10 +346,16 @@
       if (availableCandidates.length === 0) {
         resultElement.textContent = "ALL COMPLETED!";
         applyStyle(resultElement, "");
+        // ★終了時もQRコードは出さない
+        qrElement.style.display = 'none';
         return;
       }
 
+      // ★ゲーム開始時にQRコードを非表示にする
+      qrElement.style.display = 'none';
+
       isAnimating = true;
+
       const finalResult = drawRandomCandidate();
 
       animationInterval = setInterval(() => {
@@ -365,6 +384,7 @@
       }, 3000);
     }
 
+    // DB更新
     function updateFirebase(result) {
       db.ref('gameState/history').once('value').then(snapshot => {
         const currentHistory = snapshot.val() || [];
@@ -376,6 +396,7 @@
       });
     }
 
+    // 履歴UI更新
     function addToHistoryUI(item) {
       const li = document.createElement('li');
       li.textContent = item;
@@ -388,13 +409,18 @@
       if (list.children.length > 5) list.removeChild(list.lastChild);
     }
 
+    // リセット機能
     function resetGame() {
       if(!confirm("ゲームをリセットしますか？履歴とプレイヤーの状態が全て消去されます。")) return;
       db.ref('gameState').remove();
       db.ref('winners').remove();
+      
+      // リロード前に強制的に表示状態を戻す（リロードされるので必須ではないが一瞬見えるように）
+      qrElement.style.display = 'block';
       location.reload();
     }
 
+    // 勝者表示
     function showWinner(name) {
       document.getElementById('winnerName').textContent = name;
       document.getElementById('winnerModal').style.display = 'flex';
@@ -403,10 +429,11 @@
       document.getElementById('winnerModal').style.display = 'none';
     }
 
+    // イベントリスナー（クリックで抽選開始）
     resultElement.addEventListener('click', performDraw);
     drawButton.addEventListener('click', performDraw);
 
-    // --- スタイル関数 ---
+    // --- スタイル適用関数 ---
     function applyStyle(element, text, isHistoryItem = false) {
       element.removeAttribute('style');
       element.removeAttribute('class');
