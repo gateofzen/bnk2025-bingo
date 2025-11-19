@@ -257,7 +257,6 @@
             applyStyle(resultElement, latest);
             qrElement.style.display = 'none';
           } else {
-            // ★変更: 初期表示テキストはHTML側で設定済み
             qrElement.style.display = 'block';
           }
         }
@@ -352,6 +351,7 @@
         applyStyle(resultElement, randomCandidate);
       }, 100);
 
+      // ★時間指定: 1.5秒
       setTimeout(() => {
         if (animationInterval) {
           clearInterval(animationInterval);
@@ -369,7 +369,7 @@
         if (availableCandidates.length === 0) {
            setTimeout(() => alert("全てのプログラムが終了しました！"), 1000);
         }
-      }, 3000);
+      }, 1500);
     }
 
     function updateFirebase(result) {
