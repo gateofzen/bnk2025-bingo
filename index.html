@@ -44,11 +44,10 @@
 
     .container { max-width: 500px; margin: 0 auto; text-align: center; padding-top: 20px; }
     
-    /* ★修正箇所: グリッドの定義を厳密に正方形に戻しました */
     .bingo-grid {
       display: grid; 
       grid-template-columns: repeat(3, 1fr); 
-      grid-template-rows: repeat(3, 1fr); /* ★これを追加して高さを確保 */
+      grid-template-rows: repeat(3, 1fr); /* 高さを確保 */
       gap: 8px;
       width: 92vw; 
       max-width: 400px; 
@@ -56,16 +55,15 @@
       margin: 10px auto 20px auto;
     }
 
-    /* ★修正箇所: マスの中央揃えを強化 */
     .bingo-cell {
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
-      border-radius: 12px;
+      border-radius: 12px; /* ★ここで角を丸めます */
       width: 100%;
-      height: 100%;
+      height: 100%; /* 親のgrid-rowに合わせて高さを100%に */
       display: flex; 
-      justify-content: center; /* 左右中央 */
-      align-items: center;     /* 上下中央 */
+      justify-content: center; 
+      align-items: center;     
       font-size: 0.85rem; 
       font-weight: bold; 
       line-height: 1.1;
@@ -89,6 +87,11 @@
       font-weight: bold; cursor: pointer; width: 92vw; max-width: 400px;
       margin-bottom: 10px; letter-spacing: 1px;
     }
+    .btn-random.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
 
     #status {
       color: #FFFF00; font-size: 1.2rem; margin: 15px 0; 
@@ -121,7 +124,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 8.1 (Layout Fixed)</div>
+  <div class="version-tag">Ver 8.2 (Corners Rounded)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -135,7 +138,7 @@
     <div id="status">READY...</div>
     
     <div class="controls">
-      <button class="btn-random" onclick="randomFill()">AUTO FILL (ランダム)</button>
+      <button class="btn-random" id="randomFillButton" onclick="randomFill()">AUTO FILL (ランダム)</button>
       <p style="color:#aaa; font-size:0.8rem; margin-top:8px;">開始後は変更できません</p>
     </div>
     <div class="bingo-grid" id="grid"></div>
@@ -156,7 +159,7 @@
       authDomain: "bnk2025-bingo.firebaseapp.com",
       databaseURL: "https://bnk2025-bingo-default-rtdb.firebaseio.com",
       projectId: "bnk2025-bingo",
-      storageBucket: "bnk2025-bingo.firebasestorage.app",
+      storageBucket: "bnk2025-bingo.firebase-storage.app",
       messagingSenderId: "127094139624",
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
@@ -175,6 +178,7 @@
     let isBingo = false;
     let editingIndex = -1;
     let currentGenre = "BB1";
+    let gameStarted = false; // ★ゲーム開始フラグを追加
 
     window.onload = function() {
       initGrid();
@@ -202,17 +206,32 @@
             }
           });
         }
-      } catch (err) { console.log(err); }
+      } catch (err) { console.log(err); err.message; }
     }
 
     function startGame() {
       const nameInput = document.getElementById('playerName');
       if(!nameInput.value.trim()) return alert("名前を入力してください");
+      
+      // ★カードが全て埋まっているかチェック
+      if (myCard.some(cell => cell === null)) {
+          return alert("ビンゴカードを全て埋めてください！");
+      }
+
       playerName = nameInput.value.trim();
+      gameStarted = true; // ★ゲーム開始フラグを立てる
       
       document.getElementById('displayName').textContent = playerName;
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
+
+      // ★ゲーム開始後、AUTO FILLと個別選択を無効化
+      document.getElementById('randomFillButton').classList.add('disabled');
+      const cells = document.getElementsByClassName('bingo-cell');
+      for(let i=0; i<cells.length; i++) {
+          cells[i].onclick = null; // クリックイベントを削除
+          cells[i].style.cursor = 'default';
+      }
 
       requestWakeLock();
 
@@ -230,7 +249,11 @@
           const badge = document.createElement('span');
           badge.className = "status-badge";
           badge.textContent = drawnHistory[0];
-          applyStyle(badge, drawnHistory[0]); 
+          
+          // ★ここで getBgColor と getTextColor を使ってスタイルを適用
+          badge.style.backgroundColor = getBgColor(drawnHistory[0]);
+          badge.style.color = getTextColor(drawnHistory[0]);
+          
           statusEl.appendChild(badge);
         } else {
           statusEl.textContent = "READY...";
@@ -241,18 +264,18 @@
     }
 
     function randomFill() {
-      if(drawnHistory.length > 0) return alert("ゲームが開始されているため変更できません");
+      if(gameStarted) return; // ★ゲーム開始後は無効
       const pool = [...candidates];
       for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
       }
       myCard = pool.slice(0, 9);
-      renderGrid();
+      renderGrid(); // ★即座にUIに反映
     }
 
     function openSelector(index) {
-      if(drawnHistory.length > 0) return alert("ゲームが開始されているため変更できません");
+      if(gameStarted) return; // ★ゲーム開始後は無効
       editingIndex = index;
       document.getElementById('selectorModal').style.display = 'flex';
       currentGenre = "BB1";
@@ -305,7 +328,10 @@
         badge.textContent = "選択済";
         div.appendChild(badge); 
 
-        applyStyle(div, prog);
+        // ★ここで getBgColor と getTextColor を使ってスタイルを適用
+        div.style.backgroundColor = getBgColor(prog); 
+        div.style.color = getTextColor(prog);
+
 
         const isAlreadySelected = myCard.some((c, idx) => c === prog && idx !== editingIndex);
         if(isAlreadySelected) {
@@ -329,12 +355,16 @@
         const text = myCard[i];
         const cell = cells[i];
         cell.innerHTML = "";
-        cell.removeAttribute("style");
-        cell.className = "bingo-cell";
+        cell.removeAttribute("style"); // スタイルをリセット
+        cell.className = "bingo-cell"; // クラスもリセット
 
         if(text) {
           cell.textContent = text;
-          applyStyle(cell, text);
+          // ★ここでスタイルを再適用
+          cell.style.backgroundColor = getBgColor(text);
+          cell.style.color = getTextColor(text);
+          cell.style.borderRadius = "12px"; // ★ここで丸角を適用
+
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
@@ -343,6 +373,8 @@
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
           cell.style.backgroundColor = "rgba(34,34,34,0.9)";
+          cell.style.color = "white"; // TAP文字の色
+          cell.style.borderRadius = "12px"; // ★ここで丸角を適用
         }
       }
       checkBingo(hits);
@@ -360,32 +392,38 @@
       }
     }
 
-    function applyStyle(element, text, isHistoryItem = false) {
-      element.removeAttribute('style'); element.removeAttribute('class');
-      let bgColor = 'transparent'; let textColor = 'white';
-      if (text.startsWith("BB1")) { bgColor = '#FFFF00'; textColor = 'black'; }
-      else if (text.startsWith("BB2")) { bgColor = '#FF9933'; textColor = 'black'; }
-      else if (text.startsWith("BB3")) { bgColor = '#FF3300'; textColor = 'black'; }
-      else if (text.startsWith("BSBi")) { bgColor = '#336699'; textColor = '#DEFF66'; }
-      else if (text.startsWith("BSB")) { bgColor = '#00CCFF'; textColor = 'black'; }
-      else if (text.startsWith("BSWi")) { bgColor = '#990099'; textColor = '#FFEF7F'; }
-      else if (text.startsWith("BSW")) { bgColor = '#CC66FF'; textColor = 'white'; }
-      else if (text.startsWith("BSL")) { bgColor = '#0000CC'; textColor = 'white'; }
-      else if (text.includes("FEEL NOW G")) { bgColor = '#B08A3A'; textColor = 'white'; }
-      else if (text.includes("FEEL NOW S")) { bgColor = '#666666'; textColor = 'white'; }
-      else if (text.includes("FEEL NOW B")) { bgColor = '#00121C'; textColor = 'white'; }
-      else if (text.includes("FEEL HIGH")) { bgColor = 'white'; textColor = 'black'; }
-      else if (text.includes("FEEL DEEP")) { bgColor = 'white'; textColor = 'black'; }
-      else if (text.includes("BTM")) { bgColor = '#00121C'; textColor = '#BD3EA4'; }
-      else if (text.includes("FREE")) { bgColor = '#00121C'; textColor = '#D61C1C'; }
-      else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
-      else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
-      else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
-      else if (text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") { bgColor = 'white'; textColor = 'black'; }
-      
-      element.style.backgroundColor = bgColor; element.style.color = textColor;
-      if (!isHistoryItem) { element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; }
-      else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; }
+    // ★カラー取得関数を分離
+    function getBgColor(text) {
+        if (text.startsWith("BB1")) return '#FFFF00';
+        else if (text.startsWith("BB2")) return '#FF9933';
+        else if (text.startsWith("BB3")) return '#FF3300';
+        else if (text.startsWith("BSBi")) return '#336699';
+        else if (text.startsWith("BSB")) return '#00CCFF';
+        else if (text.startsWith("BSWi")) return '#990099';
+        else if (text.startsWith("BSW")) return '#CC66FF';
+        else if (text.startsWith("BSL")) return '#0000CC';
+        else if (text.includes("FEEL NOW G")) return '#B08A3A';
+        else if (text.includes("FEEL NOW S")) return '#666666';
+        else if (text.includes("FEEL NOW B")) return '#00121C';
+        else if (text.includes("FEEL HIGH")) return 'white';
+        else if (text.includes("FEEL DEEP")) return 'white';
+        else if (text.includes("BTM")) return '#00121C';
+        else if (text.includes("FREE")) return '#00121C';
+        else if (text.includes("FEEL")) return '#00121C';
+        else if (text.includes("SP") || text.startsWith("ITS") || text === "ZEDD MIX") return '#00121C';
+        else if (text === "BEERCYCLE") return '#7A3202';
+        else if (text === "SKRILLEX") return 'white';
+        return 'rgba(34, 34, 34, 0.9)'; // デフォルト
+    }
+
+    function getTextColor(text) {
+        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || text.startsWith("BSB") || text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
+        else if (text.startsWith("BSBi")) return '#DEFF66';
+        else if (text.startsWith("BSWi")) return '#FFEF7F';
+        else if (text.includes("BTM")) return '#BD3EA4';
+        else if (text.includes("FREE")) return '#D61C1C';
+        else if (text.includes("FEEL")) return '#0761F1';
+        return 'white'; // デフォルト
     }
   </script>
 </body>
