@@ -44,14 +44,13 @@
 
     .container { max-width: 500px; margin: 0 auto; text-align: center; padding-top: 20px; }
     
+    /* グリッド設定 */
     .bingo-grid {
       display: grid; 
       grid-template-columns: repeat(3, 1fr); 
-      grid-template-rows: repeat(3, 1fr); /* 高さを確保 */
+      grid-template-rows: repeat(3, 1fr);
       gap: 8px;
-      width: 92vw; 
-      max-width: 400px; 
-      aspect-ratio: 1 / 1; /* 正方形を強制 */
+      width: 92vw; max-width: 400px; aspect-ratio: 1 / 1;
       margin: 10px auto 20px auto;
     }
 
@@ -59,20 +58,11 @@
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
       border-radius: 12px;
-      width: 100%;
-      height: 100%;
-      display: flex; 
-      justify-content: center; 
-      align-items: center;     
-      font-size: 0.85rem; 
-      font-weight: bold; 
-      line-height: 1.1;
-      text-align: center; 
-      word-break: break-word; 
-      padding: 2px; 
-      cursor: pointer; 
-      user-select: none; 
-      position: relative;
+      width: 100%; height: 100%;
+      display: flex; justify-content: center; align-items: center;     
+      font-size: 0.85rem; font-weight: bold; line-height: 1.1;
+      text-align: center; word-break: break-word; padding: 2px; 
+      cursor: pointer; user-select: none; position: relative;
       transition: opacity 0.3s ease;
     }
     .bingo-cell.hit { 
@@ -87,20 +77,19 @@
       font-weight: bold; cursor: pointer; width: 92vw; max-width: 400px;
       margin-bottom: 10px; letter-spacing: 1px;
     }
-    .btn-random.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
+    .btn-random.disabled { opacity: 0.5; cursor: not-allowed; }
 
     #status {
       color: #FFFF00; font-size: 1.2rem; margin: 15px 0; 
       min-height: 40px; font-weight: bold;
       display: flex; justify-content: center; align-items: center;
     }
+    
+    /* LATESTの帯（角丸なし） */
     .status-badge {
       display: inline-block; padding: 5px 15px; margin-left: 10px;
-      border-radius: 5px; font-size: 1rem; color: white;
+      border-radius: 0;
+      font-size: 1rem; color: white;
       box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
 
@@ -118,13 +107,42 @@
     
     .list-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
     .list-item { padding: 15px; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center; }
-    .list-item.disabled { opacity: 0.3; pointer-events: none; background: #000; border-color: #222; }
+    
+    /* ★重要: 選択済みのアイテムを確実にグレーアウトさせる */
+    .list-item.disabled { 
+      opacity: 0.3 !important; 
+      pointer-events: none !important; 
+      background-color: #333 !important; /* 背景色を強制的に暗く */
+      border-color: #555 !important;
+      color: #aaa !important;
+    }
     .selected-badge { color: #ff5555; font-weight: bold; font-size: 0.75rem; display: none; }
     .list-item.disabled .selected-badge { display: block; }
+
+    .bingo-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.95);
+      z-index: 2000; flex-direction: column;
+      justify-content: center; align-items: center;
+      animation: fadeIn 0.3s;
+    }
+    .bingo-text {
+      font-size: 5rem; font-weight: bold; color: #FF3300;
+      text-shadow: 0 0 20px #FF9933;
+      margin-bottom: 20px; animation: popIn 0.5s;
+    }
+    @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    .close-bingo-btn {
+      padding: 10px 30px; font-size: 1.2rem; margin-top: 30px;
+      background: transparent; border: 2px solid white;
+      color: white; cursor: pointer; border-radius: 30px;
+    }
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 8.3 (Fix Login)</div>
+  <div class="version-tag">Ver 9.1 (Fix GrayOut)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -144,10 +162,16 @@
     <div class="bingo-grid" id="grid"></div>
   </div>
 
+  <div id="myBingoModal" class="bingo-overlay">
+    <div class="bingo-text">BINGO!!!</div>
+    <div style="font-size: 1.5rem; margin-top: 20px;">CONGRATULATIONS!</div>
+    <button class="close-bingo-btn" onclick="closeModal('myBingoModal')">CLOSE</button>
+  </div>
+
   <div id="selectorModal" class="modal">
     <div class="modal-header">
       <span style="font-weight:bold; font-size:1.1rem;">プログラム選択</span>
-      <button class="btn-close" onclick="closeModal()">閉じる</button>
+      <button class="btn-close" onclick="closeModal('selectorModal')">閉じる</button>
     </div>
     <div class="genre-tabs" id="genreTabs"></div>
     <div class="list-container" id="programList"></div>
@@ -212,12 +236,7 @@
     function startGame() {
       const nameInput = document.getElementById('playerName');
       if(!nameInput.value.trim()) return alert("名前を入力してください");
-      
-      // ★修正: ここにあったカードチェックを削除しました
-      // ユーザーはまず名前を入力してロビーに入り、そこでカードを作ります
-
       playerName = nameInput.value.trim();
-      // gameStarted = true; // ★ここはまだfalseのまま。履歴受信時にロック判断します
       
       document.getElementById('displayName').textContent = playerName;
       document.getElementById('loginScreen').style.display = 'none';
@@ -234,9 +253,8 @@
         drawnHistory = snapshot.val() || [];
         const statusEl = document.getElementById('status');
         
-        // 履歴がある＝ゲーム開始済み
         if(drawnHistory.length > 0) {
-          gameStarted = true; // ロック開始
+          gameStarted = true; 
           document.getElementById('randomFillButton').classList.add('disabled');
           
           statusEl.innerHTML = "LATEST: ";
@@ -249,7 +267,7 @@
         } else {
           statusEl.textContent = "READY...";
           isBingo = false;
-          gameStarted = false; // リセットされたらロック解除
+          gameStarted = false; 
           document.getElementById('randomFillButton').classList.remove('disabled');
         }
         renderGrid();
@@ -276,8 +294,8 @@
       renderList("BB1");
     }
 
-    function closeModal() {
-      document.getElementById('selectorModal').style.display = 'none';
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
     }
 
     function renderTabs() {
@@ -324,13 +342,14 @@
         div.style.backgroundColor = getBgColor(prog); 
         div.style.color = getTextColor(prog);
 
+        // ★重複チェック
         const isAlreadySelected = myCard.some((c, idx) => c === prog && idx !== editingIndex);
         if(isAlreadySelected) {
           div.classList.add('disabled');
         } else {
           div.onclick = function() {
             myCard[editingIndex] = prog;
-            closeModal();
+            closeModal('selectorModal');
             renderGrid();
           };
         }
@@ -379,10 +398,10 @@
       if(currentBingo && !isBingo) {
         isBingo = true;
         db.ref('winners').push({ name: playerName, timestamp: Date.now() });
+        document.getElementById('myBingoModal').style.display = 'flex';
       }
     }
 
-    // ★カラー取得関数
     function getBgColor(text) {
         if (text.startsWith("BB1")) return '#FFFF00';
         else if (text.startsWith("BB2")) return '#FF9933';
