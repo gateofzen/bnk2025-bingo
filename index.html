@@ -58,9 +58,9 @@
     .bingo-cell {
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
-      border-radius: 12px; /* ★ここで角を丸めます */
+      border-radius: 12px;
       width: 100%;
-      height: 100%; /* 親のgrid-rowに合わせて高さを100%に */
+      height: 100%;
       display: flex; 
       justify-content: center; 
       align-items: center;     
@@ -124,7 +124,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 8.2 (Corners Rounded)</div>
+  <div class="version-tag">Ver 8.3 (Fix Login)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -159,7 +159,7 @@
       authDomain: "bnk2025-bingo.firebaseapp.com",
       databaseURL: "https://bnk2025-bingo-default-rtdb.firebaseio.com",
       projectId: "bnk2025-bingo",
-      storageBucket: "bnk2025-bingo.firebase-storage.app",
+      storageBucket: "bnk2025-bingo.firebasestorage.app",
       messagingSenderId: "127094139624",
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
@@ -178,7 +178,7 @@
     let isBingo = false;
     let editingIndex = -1;
     let currentGenre = "BB1";
-    let gameStarted = false; // ★ゲーム開始フラグを追加
+    let gameStarted = false; 
 
     window.onload = function() {
       initGrid();
@@ -206,32 +206,22 @@
             }
           });
         }
-      } catch (err) { console.log(err); err.message; }
+      } catch (err) { console.log(err); }
     }
 
     function startGame() {
       const nameInput = document.getElementById('playerName');
       if(!nameInput.value.trim()) return alert("名前を入力してください");
       
-      // ★カードが全て埋まっているかチェック
-      if (myCard.some(cell => cell === null)) {
-          return alert("ビンゴカードを全て埋めてください！");
-      }
+      // ★修正: ここにあったカードチェックを削除しました
+      // ユーザーはまず名前を入力してロビーに入り、そこでカードを作ります
 
       playerName = nameInput.value.trim();
-      gameStarted = true; // ★ゲーム開始フラグを立てる
+      // gameStarted = true; // ★ここはまだfalseのまま。履歴受信時にロック判断します
       
       document.getElementById('displayName').textContent = playerName;
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
-
-      // ★ゲーム開始後、AUTO FILLと個別選択を無効化
-      document.getElementById('randomFillButton').classList.add('disabled');
-      const cells = document.getElementsByClassName('bingo-cell');
-      for(let i=0; i<cells.length; i++) {
-          cells[i].onclick = null; // クリックイベントを削除
-          cells[i].style.cursor = 'default';
-      }
 
       requestWakeLock();
 
@@ -244,38 +234,41 @@
         drawnHistory = snapshot.val() || [];
         const statusEl = document.getElementById('status');
         
+        // 履歴がある＝ゲーム開始済み
         if(drawnHistory.length > 0) {
+          gameStarted = true; // ロック開始
+          document.getElementById('randomFillButton').classList.add('disabled');
+          
           statusEl.innerHTML = "LATEST: ";
           const badge = document.createElement('span');
           badge.className = "status-badge";
           badge.textContent = drawnHistory[0];
-          
-          // ★ここで getBgColor と getTextColor を使ってスタイルを適用
           badge.style.backgroundColor = getBgColor(drawnHistory[0]);
           badge.style.color = getTextColor(drawnHistory[0]);
-          
           statusEl.appendChild(badge);
         } else {
           statusEl.textContent = "READY...";
           isBingo = false;
+          gameStarted = false; // リセットされたらロック解除
+          document.getElementById('randomFillButton').classList.remove('disabled');
         }
         renderGrid();
       });
     }
 
     function randomFill() {
-      if(gameStarted) return; // ★ゲーム開始後は無効
+      if(gameStarted) return; 
       const pool = [...candidates];
       for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
       }
       myCard = pool.slice(0, 9);
-      renderGrid(); // ★即座にUIに反映
+      renderGrid(); 
     }
 
     function openSelector(index) {
-      if(gameStarted) return; // ★ゲーム開始後は無効
+      if(gameStarted) return; 
       editingIndex = index;
       document.getElementById('selectorModal').style.display = 'flex';
       currentGenre = "BB1";
@@ -328,10 +321,8 @@
         badge.textContent = "選択済";
         div.appendChild(badge); 
 
-        // ★ここで getBgColor と getTextColor を使ってスタイルを適用
         div.style.backgroundColor = getBgColor(prog); 
         div.style.color = getTextColor(prog);
-
 
         const isAlreadySelected = myCard.some((c, idx) => c === prog && idx !== editingIndex);
         if(isAlreadySelected) {
@@ -355,15 +346,14 @@
         const text = myCard[i];
         const cell = cells[i];
         cell.innerHTML = "";
-        cell.removeAttribute("style"); // スタイルをリセット
-        cell.className = "bingo-cell"; // クラスもリセット
+        cell.removeAttribute("style"); 
+        cell.className = "bingo-cell"; 
 
         if(text) {
           cell.textContent = text;
-          // ★ここでスタイルを再適用
           cell.style.backgroundColor = getBgColor(text);
           cell.style.color = getTextColor(text);
-          cell.style.borderRadius = "12px"; // ★ここで丸角を適用
+          cell.style.borderRadius = "12px"; 
 
           if(drawnHistory.includes(text)) {
             hits[i] = true;
@@ -373,8 +363,8 @@
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
           cell.style.backgroundColor = "rgba(34,34,34,0.9)";
-          cell.style.color = "white"; // TAP文字の色
-          cell.style.borderRadius = "12px"; // ★ここで丸角を適用
+          cell.style.color = "white"; 
+          cell.style.borderRadius = "12px"; 
         }
       }
       checkBingo(hits);
@@ -392,7 +382,7 @@
       }
     }
 
-    // ★カラー取得関数を分離
+    // ★カラー取得関数
     function getBgColor(text) {
         if (text.startsWith("BB1")) return '#FFFF00';
         else if (text.startsWith("BB2")) return '#FF9933';
@@ -410,20 +400,20 @@
         else if (text.includes("BTM")) return '#00121C';
         else if (text.includes("FREE")) return '#00121C';
         else if (text.includes("FEEL")) return '#00121C';
-        else if (text.includes("SP") || text.startsWith("ITS") || text === "ZEDD MIX") return '#00121C';
+        else if (text.includes("SP")) return '#00121C';
+        else if (text.startsWith("ITS") || text === "ZEDD MIX" || text === "SKRILLEX") return 'white';
         else if (text === "BEERCYCLE") return '#7A3202';
-        else if (text === "SKRILLEX") return 'white';
-        return 'rgba(34, 34, 34, 0.9)'; // デフォルト
+        return 'rgba(34, 34, 34, 0.9)'; 
     }
 
     function getTextColor(text) {
-        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || text.startsWith("BSB") || text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
+        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || text.startsWith("BSB") || text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") return 'black';
         else if (text.startsWith("BSBi")) return '#DEFF66';
         else if (text.startsWith("BSWi")) return '#FFEF7F';
         else if (text.includes("BTM")) return '#BD3EA4';
         else if (text.includes("FREE")) return '#D61C1C';
         else if (text.includes("FEEL")) return '#0761F1';
-        return 'white'; // デフォルト
+        return 'white'; 
     }
   </script>
 </body>
