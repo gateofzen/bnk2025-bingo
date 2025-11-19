@@ -34,6 +34,7 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
 
+    /* 結果表示（クリックで次へ） */
     #result {
       font-size: 9rem; font-weight: bold; margin-bottom: 10px;
       display: inline-block; cursor: pointer;
@@ -42,29 +43,24 @@
     }
     #result:active { transform: scale(0.98); }
 
+    /* QRコード */
     #joinQr {
-      width: 200px; height: 200px; margin: 10px auto 20px auto;
-      border: 5px solid white; border-radius: 10px;
-      display: block; box-shadow: 0 0 20px rgba(255,255,255,0.3); cursor: pointer;
+      width: 220px; height: 220px; margin: 20px auto;
+      border: 6px solid white; border-radius: 15px;
+      display: block; box-shadow: 0 0 30px rgba(255,255,255,0.4); cursor: pointer;
+      transition: transform 0.1s;
     }
+    #joinQr:active { transform: scale(0.95); }
 
+    /* 履歴エリア */
     #historyContainer {
-      margin-top: 10px; margin-bottom: 20px;
+      margin-top: 20px; margin-bottom: 20px;
       font-size: 2.1rem; text-align: center; min-height: 80px;
     }
     #historyList { list-style: none; padding: 0; margin: 0; }
     #historyList li { margin: 3px; display: inline-block; }
 
-    #drawButton {
-      width: 80px; height: 80px; background: transparent;
-      border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%;
-      cursor: pointer; outline: none; box-shadow: none;
-      transition: all 0.3s ease; margin-top: 10px;
-    }
-    #drawButton:hover {
-      border-color: rgba(255, 255, 255, 0.6); transform: scale(1.1);
-    }
-
+    /* リンクボタン */
     #linkButton {
       position: fixed; left: 30px; bottom: 30px; width: 80px; height: 80px;
       background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);
@@ -73,6 +69,7 @@
     }
     #linkButton:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
 
+    /* リセットボタン */
     #resetButton {
       position: fixed; top: 20px; right: 20px;
       background: rgba(0, 0, 0, 0.5); color: #aaa;
@@ -81,7 +78,7 @@
     }
     #resetButton:hover { background: red; color: white; }
 
-    /* プレイヤー数カウンター */
+    /* プレイヤー数カウンター（ボタン） */
     #playerCounter {
       position: fixed; top: 20px; left: 20px;
       font-size: 1.5rem; font-weight: bold; color: rgba(255,255,255,0.8);
@@ -89,9 +86,7 @@
       cursor: pointer; padding: 5px 10px; border-radius: 5px;
       transition: background 0.3s;
     }
-    #playerCounter:hover {
-      background: rgba(255, 255, 255, 0.2); color: white;
-    }
+    #playerCounter:hover { background: rgba(255, 255, 255, 0.2); color: white; }
 
     /* --- モーダル共通 --- */
     .modal-overlay {
@@ -117,10 +112,8 @@
       text-shadow: 0 0 20px #FF9933; animation: slideUp 0.5s ease-out;
     }
 
-    /* 参加者リスト表示（スタイル調整） */
+    /* 参加者リスト表示 */
     .player-list-title { font-size: 3rem; font-weight: bold; color: #FF9933; margin-bottom: 20px; }
-    
-    /* リストを縦並びで見やすく */
     #playerListContent {
       display: flex; flex-direction: column; align-items: center;
       max-height: 65vh; overflow-y: auto; width: 80%;
@@ -131,19 +124,16 @@
       padding: 10px 20px; width: 100%; text-align: center;
       border-bottom: 1px solid #333;
     }
-    /* 勝者用の強調スタイル */
+    /* 勝者強調 */
     .is-winner {
-      color: #FFFF00; /* 金色 */
-      font-weight: bold;
+      color: #FFFF00; font-weight: bold;
       background: rgba(255, 215, 0, 0.1);
       border-bottom: 1px solid #664400;
     }
     .rank-badge {
-      display: inline-block;
-      background: #FF3300; color: white;
-      font-size: 1.2rem; padding: 2px 10px;
-      border-radius: 20px; margin-right: 15px;
-      vertical-align: middle;
+      display: inline-block; background: #FF3300; color: white;
+      font-size: 1.2rem; padding: 2px 10px; border-radius: 20px; 
+      margin-right: 15px; vertical-align: middle;
     }
     .crown { font-size: 1.5rem; margin-left: 10px; }
     
@@ -163,7 +153,6 @@
       <p style="font-size:1rem; margin:0; opacity:0.7;">Past Results:</p>
       <ul id="historyList"></ul>
     </div>
-    <button id="drawButton"></button>
   </div>
 
   <a href="https://gateofzen.github.io/screen/" target="_blank" id="linkButton"></a>
@@ -235,7 +224,6 @@
 
     const resultElement = document.getElementById('result');
     const qrElement = document.getElementById('joinQr');
-    const drawButton = document.getElementById('drawButton');
     const historyList = document.getElementById('historyList');
     const playerCounter = document.getElementById('playerCounter');
 
@@ -246,9 +234,8 @@
     let isAnimating = false;
     let animationInterval = null;
     
-    // データ管理用
-    let playersData = []; // {name, timestamp}
-    let winnersData = []; // {name, timestamp}
+    let playersData = []; 
+    let winnersData = []; 
 
     window.onload = function() {
       db.ref('gameState/history').once('value').then(snapshot => {
@@ -273,26 +260,26 @@
         }
       });
 
-      // プレイヤー監視（配列に格納）
+      // プレイヤー監視
       db.ref('players').on('value', snap => {
         playersData = [];
         snap.forEach(child => playersData.push(child.val()));
         updateCounter();
       });
 
-      // 勝者監視（配列に格納し、時間順にソート）
+      // 勝者監視
       db.ref('winners').on('value', snap => {
         winnersData = [];
         snap.forEach(child => winnersData.push(child.val()));
-        // タイムスタンプ順（早い順）にソート＝順位
         winnersData.sort((a, b) => a.timestamp - b.timestamp);
         updateCounter();
       });
 
-      // 勝者通知ポップアップ
+      // 勝者ポップアップ
       db.ref('winners').on('child_added', (snapshot) => {
         const winner = snapshot.val();
         if (winner.timestamp > Date.now() - 10000) {
+            // ★修正: 正しい関数名で呼び出し
             addWinnerPopup(winner.name);
         }
       });
@@ -303,7 +290,6 @@
       playerCounter.textContent = `PLAYERS: ${remaining}`;
     }
 
-    // ★参加者リスト表示機能（ランキング付き）
     function showPlayerList() {
       const listContainer = document.getElementById('playerListContent');
       listContainer.innerHTML = "";
@@ -311,44 +297,33 @@
       if(playersData.length === 0) {
         listContainer.innerHTML = "<div style='color:#999; margin-top:20px;'>参加者はまだいません</div>";
       } else {
-        // 勝者名マップ作成（名前→順位）
         const winnerRankMap = {};
         winnersData.forEach((w, index) => {
            winnerRankMap[w.name] = index + 1;
         });
 
-        // リスト表示用配列作成
         let displayList = [];
-        
-        // 1. まず勝者を追加（順位順）
         winnersData.forEach((w, index) => {
            displayList.push({ name: w.name, rank: index + 1, isWinner: true });
         });
-
-        // 2. まだの参加者を追加
         playersData.forEach(p => {
-           // 勝者リストに名前がなければ追加（重複排除）
            if(!winnerRankMap[p.name]) {
              displayList.push({ name: p.name, rank: null, isWinner: false });
            }
         });
 
-        // 描画
         displayList.forEach(item => {
           const div = document.createElement('div');
           div.className = 'player-list-item';
-          
           if(item.isWinner) {
              div.classList.add('is-winner');
              div.innerHTML = `<span class="rank-badge">No.${item.rank}</span> ${item.name} <span class="crown">👑</span>`;
           } else {
              div.textContent = item.name;
           }
-          
           listContainer.appendChild(div);
         });
       }
-      
       document.getElementById('playerListModal').style.display = 'flex';
     }
 
@@ -456,7 +431,7 @@
       location.reload();
     }
 
-    // 勝者ポップアップ表示用
+    // ★修正: ポップアップ用関数名を統一
     function addWinnerPopup(name) {
       const container = document.getElementById('winnerListContainer');
       const modal = document.getElementById('winnerModal');
@@ -467,8 +442,8 @@
       modal.style.display = 'flex';
     }
 
+    // 文字クリックで抽選開始
     resultElement.addEventListener('click', performDraw);
-    drawButton.addEventListener('click', performDraw);
 
     function applyStyle(element, text, isHistoryItem = false) {
       element.removeAttribute('style'); element.removeAttribute('class');
