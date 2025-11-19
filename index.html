@@ -9,15 +9,27 @@
 
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
     body { 
-      background-color: black; color: white; font-family: sans-serif;
+      background-color: black; 
+      /* ★背景画像を追加 */
+      background-image: url('./FC_logo.png');
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      background-size: cover;
+      color: white; 
+      font-family: sans-serif;
       min-height: 100vh; margin: 0; padding-bottom: 60px;
       touch-action: manipulation;
     }
-    .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #555; z-index: 2000; }
+
+    .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; }
+
     #loginScreen { 
       position: fixed; top:0; left:0; width:100%; height:100%; 
-      background: #000; z-index: 999; display: flex; flex-direction: column; 
+      background: rgba(0,0,0,0.9); /* 背景画像が少し透けるように調整 */
+      z-index: 999; display: flex; flex-direction: column; 
       justify-content: center; align-items: center; 
     }
     input[type="text"] { 
@@ -30,34 +42,55 @@
       border: none; border-radius: 50px; cursor: pointer; color: black;
       box-shadow: 0 4px 15px rgba(255, 153, 51, 0.4);
     }
+
     .container { max-width: 500px; margin: 0 auto; text-align: center; padding-top: 20px; }
+    
     .bingo-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
       width: 92vw; max-width: 400px; aspect-ratio: 1 / 1; margin: 10px auto 20px auto;
     }
     .bingo-cell {
-      background: #222; border: 1px solid #444; border-radius: 12px;
+      background: rgba(34, 34, 34, 0.9); /* 背景が見えるように少し透過 */
+      border: 1px solid #444; border-radius: 12px;
       display: flex; justify-content: center; align-items: center;
       font-size: 0.85rem; font-weight: bold; line-height: 1.1;
       text-align: center; word-break: break-word; padding: 4px; 
       cursor: pointer; user-select: none; position: relative;
     }
     .bingo-cell.hit { border: 3px solid #fff; box-shadow: 0 0 20px rgba(255,255,255,0.5); z-index: 10; }
+    
     .btn-random {
       background: #336699; color: #DEFF66; padding: 15px 0; 
       border: none; border-radius: 12px; font-size: 1.1rem; 
       font-weight: bold; cursor: pointer; width: 92vw; max-width: 400px;
       margin-bottom: 10px; letter-spacing: 1px;
     }
+
+    /* ★LATEST表示用のスタイル */
+    #status {
+      color: #FFFF00; font-size: 1.2rem; margin: 15px 0; 
+      min-height: 40px; font-weight: bold;
+      display: flex; justify-content: center; align-items: center;
+    }
+    .status-badge {
+      display: inline-block; padding: 5px 15px; margin-left: 10px;
+      border-radius: 5px; font-size: 1rem; color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    /* モーダル */
     .modal { 
       display: none; position: fixed; top: 0; left: 0; 
-      width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; 
+      width: 100%; height: 100%; background: rgba(0,0,0,0.95); 
+      z-index: 1000; flex-direction: column; 
     }
     .modal-header { padding: 15px; background: #111; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
     .btn-close { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-size: 0.9rem; }
-    .genre-tabs { display: flex; overflow-x: auto; background: #000; padding: 15px 10px; white-space: nowrap; }
+    
+    .genre-tabs { display: flex; overflow-x: auto; background: transparent; padding: 15px 10px; white-space: nowrap; }
     .genre-tab { display: inline-block; padding: 8px 18px; margin-right: 8px; background: #222; border-radius: 20px; color: #888; font-size: 0.9rem; border: 1px solid #333; cursor: pointer; }
     .genre-tab.active { background: #eee; color: #000; font-weight: bold; border-color: #fff; }
+    
     .list-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
     .list-item { padding: 15px; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center; }
     .list-item.disabled { opacity: 0.3; pointer-events: none; background: #000; border-color: #222; }
@@ -66,7 +99,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 5.0 (Lock & Wake)</div>
+  <div class="version-tag">Ver 6.0 (Style Updated)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -76,10 +109,12 @@
 
   <div id="gameScreen" class="container" style="display:none;">
     <h2 id="displayName" style="margin:0; font-size:1.4rem; color:#ddd;">PLAYER</h2>
-    <div id="status" style="color:#FFFF00; font-size:1.2rem; margin:15px 0; height:30px; font-weight:bold;">READY...</div>
+    
+    <div id="status">READY...</div>
+    
     <div class="controls">
       <button class="btn-random" onclick="randomFill()">AUTO FILL (ランダム)</button>
-      <p style="color:#666; font-size:0.8rem; margin-top:8px;">開始後は変更できません</p>
+      <p style="color:#aaa; font-size:0.8rem; margin-top:8px;">開始後は変更できません</p>
     </div>
     <div class="bingo-grid" id="grid"></div>
   </div>
@@ -134,22 +169,17 @@
       }
     }
 
-    // ★スリープ対策（Wake Lock API）
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
           const wakeLock = await navigator.wakeLock.request('screen');
-          console.log('Screen Wake Lock active');
-          // 画面切り替えなどで外れた場合に再取得を試みる
           document.addEventListener('visibilitychange', async () => {
             if (wakeLock !== null && document.visibilityState === 'visible') {
               await navigator.wakeLock.request('screen');
             }
           });
         }
-      } catch (err) {
-        console.log('Wake Lock error:', err);
-      }
+      } catch (err) { console.log(err); }
     }
 
     function startGame() {
@@ -161,14 +191,20 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★スリープ防止開始
       requestWakeLock();
 
       db.ref('gameState/history').on('value', (snapshot) => {
         drawnHistory = snapshot.val() || [];
         const statusEl = document.getElementById('status');
+        
+        // ★修正: LATESTを色付きバッジで表示
         if(drawnHistory.length > 0) {
-          statusEl.textContent = "LATEST: " + drawnHistory[0];
+          statusEl.innerHTML = "LATEST: ";
+          const badge = document.createElement('span');
+          badge.className = "status-badge";
+          badge.textContent = drawnHistory[0];
+          applyStyle(badge, drawnHistory[0]); // 色適用
+          statusEl.appendChild(badge);
         } else {
           statusEl.textContent = "READY...";
           isBingo = false;
@@ -178,9 +214,7 @@
     }
 
     function randomFill() {
-      // ★ゲーム開始後はロック
       if(drawnHistory.length > 0) return alert("ゲームが開始されているため変更できません");
-      
       const pool = [...candidates];
       for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -191,13 +225,9 @@
     }
 
     function openSelector(index) {
-      // ★ゲーム開始後はロック
       if(drawnHistory.length > 0) return alert("ゲームが開始されているため変更できません");
-      
       editingIndex = index;
-      const modal = document.getElementById('selectorModal');
-      modal.style.display = 'flex';
-      
+      document.getElementById('selectorModal').style.display = 'flex';
       currentGenre = "BB1";
       renderTabs();
       renderList("BB1");
@@ -235,7 +265,6 @@
         return prog.startsWith(genre);
       });
       
-      // ソート
       filtered.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
 
       filtered.forEach(prog => {
@@ -272,7 +301,6 @@
       for(let i=0; i<9; i++) {
         const text = myCard[i];
         const cell = cells[i];
-        
         cell.innerHTML = "";
         cell.removeAttribute("style");
         cell.className = "bingo-cell";
@@ -287,7 +315,7 @@
           }
         } else {
           cell.innerHTML = "<span style='color:#666'>TAP</span>";
-          cell.style.backgroundColor = "#111";
+          cell.style.backgroundColor = "rgba(0,0,0,0.5)";
         }
       }
       checkBingo(hits);
@@ -330,6 +358,7 @@
       else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
       else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
       else if (text === "SKRILLEX") { bgColor = 'white'; textColor = 'black'; }
+      
       element.style.backgroundColor = bgColor;
       element.style.color = textColor;
     }
