@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BINGO PLAYER</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -26,8 +26,12 @@
       background-size: cover;
       color: white; 
       font-family: 'BrotherXL', sans-serif;
-      min-height: 100vh; margin: 0; padding-bottom: 60px;
+      /* ★修正: iPhoneでの高さズレ防止 */
+      min-height: 100vh; 
+      min-height: -webkit-fill-available;
+      margin: 0; padding-bottom: 40px;
       touch-action: manipulation;
+      overflow-x: hidden; /* 横スクロール防止 */
     }
 
     .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
@@ -51,14 +55,17 @@
       font-family: 'BrotherXL', sans-serif;
     }
 
-    .container { max-width: 500px; margin: 0 auto; text-align: center; padding-top: 20px; }
+    .container { 
+      width: 100%; max-width: 500px; margin: 0 auto; text-align: center; padding-top: 10px; 
+    }
     
+    /* ★修正: グリッドが画面からはみ出ないように調整 */
     .bingo-grid {
       display: grid; 
       grid-template-columns: repeat(3, 1fr); 
       grid-template-rows: repeat(3, 1fr);
-      gap: 8px;
-      width: 92vw; 
+      gap: 6px; /* 隙間を少し狭く */
+      width: 94vw; /* 画面幅いっぱい */
       max-width: 400px; 
       aspect-ratio: 1 / 1;
       margin: 10px auto 20px auto;
@@ -68,20 +75,12 @@
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
       border-radius: 12px;
-      width: 100%;
-      height: 100%;
-      display: flex; 
-      justify-content: center; 
-      align-items: center;     
-      font-size: 0.85rem; 
-      font-weight: bold; 
-      line-height: 1.1;
-      text-align: center; 
-      word-break: break-word; 
-      padding: 2px; 
-      cursor: pointer; 
-      user-select: none; 
-      position: relative;
+      width: 100%; height: 100%;
+      display: flex; justify-content: center; align-items: center;     
+      font-size: 0.8rem; /* 文字サイズ微調整 */
+      font-weight: bold; line-height: 1.1;
+      text-align: center; word-break: break-word; padding: 2px; 
+      cursor: pointer; user-select: none; position: relative;
       transition: opacity 0.3s ease;
     }
     .bingo-cell.hit { 
@@ -93,21 +92,20 @@
     .btn-random {
       background: #336699; color: #DEFF66; padding: 15px 0; 
       border: none; border-radius: 12px; font-size: 1.1rem; 
-      font-weight: bold; cursor: pointer; width: 92vw; max-width: 400px;
+      font-weight: bold; cursor: pointer; width: 94vw; max-width: 400px;
       margin-bottom: 10px; letter-spacing: 1px;
       font-family: 'BrotherXL', sans-serif;
     }
     .btn-random.disabled { opacity: 0.5; cursor: not-allowed; }
 
     #status {
-      color: #FFFF00; font-size: 1.2rem; margin: 15px 0; 
-      min-height: 40px; font-weight: bold;
+      color: #FFFF00; font-size: 1.2rem; margin: 10px 0; 
+      min-height: 30px; font-weight: bold;
       display: flex; justify-content: center; align-items: center;
     }
     .status-badge {
       display: inline-block; padding: 5px 15px; margin-left: 10px;
-      border-radius: 0;
-      font-size: 1rem; color: white;
+      border-radius: 0; font-size: 1rem; color: white;
       box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
 
@@ -129,40 +127,30 @@
     .list-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
     .list-item { padding: 15px; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center; }
     .list-item.disabled { 
-      opacity: 0.3 !important; 
-      pointer-events: none !important; 
-      background-color: #333 !important; 
-      border-color: #555 !important;
-      color: #aaa !important;
+      opacity: 0.3 !important; pointer-events: none !important; 
+      background-color: #333 !important; border-color: #555 !important; color: #aaa !important;
     }
     .selected-badge { color: #ff5555; font-weight: bold; font-size: 0.75rem; display: none; font-family: sans-serif; }
     .list-item.disabled .selected-badge { display: block; }
 
-    .bingo-overlay {
+    /* ビンゴ達成後の画面 */
+    #bingoCompleteScreen {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%; background: rgba(0,0,0,0.95);
       z-index: 2000; flex-direction: column;
       justify-content: center; align-items: center;
-      animation: fadeIn 0.3s;
+      text-align: center;
     }
     .bingo-text {
       font-size: 5rem; font-weight: bold; color: #FF3300;
-      text-shadow: 0 0 20px #FF9933;
-      margin-bottom: 20px; animation: popIn 0.5s;
+      text-shadow: 0 0 20px #FF9933; margin-bottom: 20px;
+      animation: popIn 0.5s;
     }
     @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    
-    .close-bingo-btn {
-      padding: 10px 30px; font-size: 1.2rem; margin-top: 30px;
-      background: transparent; border: 2px solid white;
-      color: white; cursor: pointer; border-radius: 30px;
-      font-family: 'BrotherXL', sans-serif;
-    }
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 13.0 (List Fixed)</div>
+  <div class="version-tag">Ver 14.0 (iPhone Fix)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -172,9 +160,7 @@
 
   <div id="gameScreen" class="container" style="display:none;">
     <h2 id="displayName" style="margin:0; font-size:1.4rem; color:#ddd;">PLAYER</h2>
-    
     <div id="status">READY...</div>
-    
     <div class="controls">
       <button class="btn-random" id="randomFillButton" onclick="randomFill()">AUTO FILL (RANDOM)</button>
       <p style="color:#aaa; font-size:0.8rem; margin-top:8px; font-family:sans-serif;">開始後は変更できません</p>
@@ -182,10 +168,10 @@
     <div class="bingo-grid" id="grid"></div>
   </div>
 
-  <div id="myBingoModal" class="bingo-overlay">
+  <div id="bingoCompleteScreen">
     <div class="bingo-text">BINGO!!!</div>
-    <div style="font-size: 1.5rem; margin-top: 20px;">CONGRATULATIONS!</div>
-    <button class="close-bingo-btn" onclick="closeModal('myBingoModal')">CLOSE</button>
+    <div style="font-size: 1.5rem; margin-top: 20px; color: white;">CONGRATULATIONS!</div>
+    <div style="font-size: 1rem; margin-top: 40px; color: #aaa;">Please wait for others...</div>
   </div>
 
   <div id="selectorModal" class="modal">
@@ -242,6 +228,7 @@
       "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
     ];
 
+    // Firebase初期化を最優先で実行
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -253,6 +240,7 @@
     let currentGenre = "BB1";
     let gameStarted = false; 
 
+    // 起動時処理（DB読み込みを待たずにグリッドを作る）
     window.onload = function() {
       initGrid();
     };
@@ -269,6 +257,7 @@
       }
     }
 
+    // スリープ防止（エラーが出ても無視して進む）
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
@@ -279,26 +268,31 @@
             }
           });
         }
-      } catch (err) { console.log(err); }
+      } catch (err) { console.log("Wake Lock not supported or failed"); }
     }
 
     function startGame() {
       const nameInput = document.getElementById('playerName');
       if(!nameInput.value.trim()) return alert("名前を入力してください");
+      
       playerName = nameInput.value.trim();
       
+      // 画面切り替え
       document.getElementById('displayName').textContent = playerName;
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      requestWakeLock();
-
+      // ★参加登録（ここを通らないとホストに見えない）
       db.ref('players').push({
         name: playerName,
         timestamp: Date.now()
       });
 
+      // 履歴同期開始
       db.ref('gameState/history').on('value', (snapshot) => {
+        // もし既にビンゴして退出済みなら何もしない
+        if(isBingo) return;
+
         drawnHistory = snapshot.val() || [];
         const statusEl = document.getElementById('status');
         
@@ -315,12 +309,13 @@
           statusEl.appendChild(badge);
         } else {
           statusEl.textContent = "READY...";
-          isBingo = false;
           gameStarted = false; 
           document.getElementById('randomFillButton').classList.remove('disabled');
         }
         renderGrid();
       });
+
+      requestWakeLock();
     }
 
     function randomFill() {
@@ -331,7 +326,7 @@
         [pool[i], pool[j]] = [pool[j], pool[i]];
       }
       myCard = pool.slice(0, 9);
-      renderGrid(); 
+      renderGrid(); // 即座に反映
     }
 
     function openSelector(index) {
@@ -425,7 +420,7 @@
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
-            cell.style.opacity = "0.4";
+            cell.style.opacity = "0.4"; // 薄くする
           }
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
@@ -438,15 +433,24 @@
     }
 
     function checkBingo(hits) {
+      if(isBingo) return; // 既にビンゴなら何もしない
+
       const lines = [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]];
       let currentBingo = false;
       for(let line of lines) {
         if(hits[line[0]] && hits[line[1]] && hits[line[2]]) currentBingo = true;
       }
-      if(currentBingo && !isBingo) {
+      
+      if(currentBingo) {
         isBingo = true;
+        // 勝者登録
         db.ref('winners').push({ name: playerName, timestamp: Date.now() });
-        document.getElementById('myBingoModal').style.display = 'flex';
+        
+        // ★ビンゴ達成画面に切り替えてリスナー停止
+        document.getElementById('bingoCompleteScreen').style.display = 'flex';
+        
+        // DB監視を停止してこれ以上更新しない（重複・遅延防止）
+        db.ref('gameState/history').off();
       }
     }
 
@@ -466,6 +470,7 @@
         else if (text.includes("FEEL DEEP")) return 'white';
         else if (text.includes("BTM")) return '#00121C';
         else if (text.includes("FREE")) return '#00121C';
+        else if (text.startsWith("FEEL NOW")) return '#00121C'; 
         else if (text.includes("FEEL")) return '#00121C';
         else if (text.includes("SP")) return '#00121C';
         else if (text === "BEERCYCLE") return '#7A3202';
