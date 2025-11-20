@@ -89,6 +89,8 @@
       border: 3px solid #fff; 
       box-shadow: 0 0 20px rgba(255,255,255,0.5); 
       z-index: 10; 
+      /* ヒット時はかなり薄く */
+      opacity: 0.4;
     }
     
     .btn-random {
@@ -130,14 +132,14 @@
     .list-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
     .list-item { padding: 15px; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center; }
     .list-item.disabled { 
-      opacity: 0.3 !important; 
+      opacity: 1 !important; 
       pointer-events: none !important; 
       background-color: #000 !important; 
       border-color: #555 !important;
-      color: #aaa !important;
+      color: #444 !important;
     }
     .selected-badge { color: #ff5555; font-weight: bold; font-size: 0.75rem; display: none; font-family: sans-serif; }
-    .list-item.disabled .selected-badge { display: block; }
+    .list-item.disabled .selected-badge { display: block; opacity: 0.7; }
 
     .bingo-overlay {
       display: none; position: fixed; top: 0; left: 0;
@@ -178,7 +180,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 30.0 (No ID/Push Only)</div>
+  <div class="version-tag">Ver 31.0 (Fix Count/Colors)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -274,11 +276,19 @@
     let currentGenre = "BB1";
     let gameStarted = false; 
     
-    // ★Ver 30.0: パスを一新
-    const PARTICIPANTS_PATH = 'participants_v30';
+    // ★重要: Ver31として新しいパスで開始
+    const PARTICIPANTS_PATH = 'bingo_v31_entries';
 
     window.onload = function() {
       initGrid();
+      // Wake Lock
+      document.addEventListener('click', async () => {
+        try {
+          if ('wakeLock' in navigator) {
+            await navigator.wakeLock.request('screen');
+          }
+        } catch(e) {}
+      }, { once: true });
     };
 
     function initGrid() {
@@ -293,20 +303,6 @@
       }
     }
 
-    // スリープ防止
-    async function requestWakeLock() {
-      try {
-        if ('wakeLock' in navigator) {
-          const wakeLock = await navigator.wakeLock.request('screen');
-          document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-              await navigator.wakeLock.request('screen');
-            }
-          });
-        }
-      } catch (err) { console.log("Wake Lock not supported or failed"); }
-    }
-
     function startGame() {
       const nameInput = document.getElementById('playerName');
       if(!nameInput.value.trim()) return alert("名前を入力してください");
@@ -317,8 +313,7 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★修正: ID指定をやめ、単純にpush（追記）のみにする
-      // これで上書きされることは物理的にあり得ない
+      // ★修正: 毎回新規にpush（追記）する（ID管理は廃止）
       db.ref(PARTICIPANTS_PATH).push({
         name: playerName,
         timestamp: Date.now()
@@ -348,8 +343,6 @@
         }
         renderGrid();
       });
-
-      requestWakeLock();
     }
 
     function manualRefresh() {
@@ -489,6 +482,7 @@
       
       if(currentBingo) {
         isBingo = true;
+        // 勝者は単純に名前と時間を送信
         db.ref('winners').push({ name: playerName, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
@@ -520,7 +514,8 @@
     }
 
     function getTextColor(text) {
-        if (text.startsWith("BSBi")) return '#DEFF66'; /* 薄い黄色 */
+        // ★修正: BSBiを薄い黄色に
+        if (text.startsWith("BSBi")) return '#DEFF66';
 
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
             (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
