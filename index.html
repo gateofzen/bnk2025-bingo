@@ -178,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 29.0 (Count & Color)</div>
+  <div class="version-tag">Ver 30.0 (No ID/Push Only)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -230,7 +230,6 @@
       measurementId: "G-2LVWF4GVS5"
     };
     
-    // candidatesリスト (省略なし)
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -274,6 +273,9 @@
     let editingIndex = -1;
     let currentGenre = "BB1";
     let gameStarted = false; 
+    
+    // ★Ver 30.0: パスを一新
+    const PARTICIPANTS_PATH = 'participants_v30';
 
     window.onload = function() {
       initGrid();
@@ -291,6 +293,7 @@
       }
     }
 
+    // スリープ防止
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
@@ -301,7 +304,7 @@
             }
           });
         }
-      } catch (err) { console.log(err); }
+      } catch (err) { console.log("Wake Lock not supported or failed"); }
     }
 
     function startGame() {
@@ -314,8 +317,9 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★重要: ホスト側と同じパス (bingo_participants_v29) に送信
-      db.ref('bingo_participants_v29').push({
+      // ★修正: ID指定をやめ、単純にpush（追記）のみにする
+      // これで上書きされることは物理的にあり得ない
+      db.ref(PARTICIPANTS_PATH).push({
         name: playerName,
         timestamp: Date.now()
       });
@@ -516,8 +520,7 @@
     }
 
     function getTextColor(text) {
-        // ★修正: BSBiは #DEFF66
-        if (text.startsWith("BSBi")) return '#DEFF66';
+        if (text.startsWith("BSBi")) return '#DEFF66'; /* 薄い黄色 */
 
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
             (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
