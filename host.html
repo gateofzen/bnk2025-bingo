@@ -426,10 +426,10 @@
     }
 
     function resetGame() {
-      if(!confirm("ゲームをリセットしますか？履歴とプレイヤーの状態が全て消去されます。")) return;
+      if(!confirm("ゲームをリセットしますか？\n（参加者リストは残ります。全員消去する場合は管理画面から行ってください）")) return;
       db.ref('gameState').remove();
       db.ref('winners').remove();
-      db.ref('players').remove();
+      // ★修正: 参加者リストは消さない (db.ref('players').remove() を削除)
       qrElement.style.display = 'block';
       location.reload();
     }
@@ -464,10 +464,7 @@
       else if (text.includes("FEEL DEEP")) { bgColor = 'white'; textColor = 'black'; }
       else if (text.includes("BTM")) { bgColor = '#00121C'; textColor = '#BD3EA4'; }
       else if (text.includes("FREE")) { bgColor = '#00121C'; textColor = '#D61C1C'; }
-      
-      // ★修正: FEEL NOWシリーズは白文字に
       else if (text.startsWith("FEEL NOW")) { bgColor = '#00121C'; textColor = 'white'; }
-      
       else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
       else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
       else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
