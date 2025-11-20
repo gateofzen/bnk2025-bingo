@@ -178,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 16.0 (Corrected Player)</div>
+  <div class="version-tag">Ver 17.0 (BSBi White)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -312,7 +312,6 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★参加登録
       db.ref('players').push({
         name: playerName,
         timestamp: Date.now()
@@ -346,7 +345,6 @@
       requestWakeLock();
     }
 
-    // ★リフレッシュ機能
     function manualRefresh() {
       if(gameStarted) {
          if(!confirm("ビンゴカードが消えてしまう可能性があります。\n再読み込みしますか？")) return;
@@ -354,7 +352,6 @@
       location.reload();
     }
 
-    // ★退出＆キャッシュクリア
     function exitAndClear() {
       if(!confirm("ゲームから退出しますか？\n(画面がおかしい場合などに使用してください)")) return;
       window.location.search = 't=' + Date.now();
@@ -516,8 +513,12 @@
     }
 
     function getTextColor(text) {
-        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || text.startsWith("BSB") || text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") return 'black';
-        else if (text.startsWith("BSBi")) return '#DEFF66';
+        // ★修正: BSBiを先にチェックし、白色を返す
+        if (text.startsWith("BSBi")) return 'white';
+        
+        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
+            (text.startsWith("BSB") && !text.startsWith("BSBi")) || // BSB (not BSBi)
+            text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
         else if (text.startsWith("BSWi")) return '#FFEF7F';
         else if (text.includes("BTM")) return '#BD3EA4';
         else if (text.includes("FREE")) return '#D61C1C';
