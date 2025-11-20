@@ -178,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 17.0 (BSBi White)</div>
+  <div class="version-tag">Ver 18.0 (ID System & BSBi Fix)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -229,6 +229,7 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
+    
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -273,6 +274,16 @@
     let currentGenre = "BB1";
     let gameStarted = false; 
 
+    // ★デバイス固有IDの取得（リロード対策・確実な人数カウントのため）
+    function getDeviceId() {
+      let id = localStorage.getItem('bingo_device_id');
+      if (!id) {
+        id = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        localStorage.setItem('bingo_device_id', id);
+      }
+      return id;
+    }
+
     window.onload = function() {
       initGrid();
     };
@@ -312,7 +323,9 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      db.ref('players').push({
+      // ★IDベースで登録（重複防止）
+      const deviceId = getDeviceId();
+      db.ref('players/' + deviceId).set({
         name: playerName,
         timestamp: Date.now()
       });
@@ -482,7 +495,11 @@
       
       if(currentBingo) {
         isBingo = true;
-        db.ref('winners').push({ name: playerName, timestamp: Date.now() });
+        // ★ID付きで勝者登録
+        const deviceId = getDeviceId();
+        db.ref('winners').push({ name: playerName, id: deviceId, timestamp: Date.now() });
+        
+        document.getElementById('bingoCompleteScreen').style.display = 'flex'; // 画面全体を覆う場合
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
       }
@@ -513,12 +530,10 @@
     }
 
     function getTextColor(text) {
-        // ★修正: BSBiを先にチェックし、白色を返す
+        // ★修正: BSBi最優先
         if (text.startsWith("BSBi")) return 'white';
-        
-        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
-            (text.startsWith("BSB") && !text.startsWith("BSBi")) || // BSB (not BSBi)
-            text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
+
+        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || text.startsWith("BSB") || text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
         else if (text.startsWith("BSWi")) return '#FFEF7F';
         else if (text.includes("BTM")) return '#BD3EA4';
         else if (text.includes("FREE")) return '#D61C1C';
