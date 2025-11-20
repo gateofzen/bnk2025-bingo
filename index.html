@@ -83,45 +83,30 @@
       cursor: pointer; 
       user-select: none; 
       position: relative;
-      transition: transform 0.1s ease; /* 動きを少しリッチに */
+      transition: opacity 0.3s ease;
     }
-
-    /* ★HIT時のスタイル変更 */
     .bingo-cell.hit { 
       border: 3px solid #fff; 
-      box-shadow: 0 0 15px rgba(255,255,255,0.8); 
+      box-shadow: 0 0 20px rgba(255,255,255,0.5); 
       z-index: 10; 
-      opacity: 1; /* 半透明化を廃止 */
-      transform: scale(1.02); /* 少し大きくして強調 */
+      opacity: 1; /* 透明度戻す */
+      transform: scale(1.02);
     }
 
-    /* ★HITスタンプの追加 */
+    /* HITスタンプ */
     .bingo-cell.hit::after {
       content: "HIT!";
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%) rotate(-15deg);
-      font-size: 2.5rem;
-      color: #FF0000;
-      font-weight: 900;
-      text-shadow: 
-        2px 2px 0 #FFF, 
-        -1px -1px 0 #FFF,  
-        1px -1px 0 #FFF,
-        -1px 1px 0 #FFF,
-        1px 1px 0 #FFF;
-      border: 3px solid #FF0000;
-      padding: 2px 8px;
-      border-radius: 8px;
+      font-size: 2.5rem; color: #FF0000; font-weight: 900;
+      text-shadow: 2px 2px 0 #FFF, -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF, 1px 1px 0 #FFF;
+      border: 3px solid #FF0000; padding: 2px 8px; border-radius: 8px;
       background-color: rgba(255, 255, 255, 0.8);
-      pointer-events: none; /* スタンプの下の文字もクリック可能に（念のため） */
-      white-space: nowrap;
-      font-family: sans-serif; /* スタンプは読みやすいフォントで */
+      pointer-events: none; white-space: nowrap; font-family: sans-serif;
       box-shadow: 3px 3px 5px rgba(0,0,0,0.5);
       animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-
     @keyframes stampIn {
       from { transform: translate(-50%, -50%) scale(2) rotate(-15deg); opacity: 0; }
       to { transform: translate(-50%, -50%) scale(1) rotate(-15deg); opacity: 1; }
@@ -166,14 +151,14 @@
     .list-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
     .list-item { padding: 15px; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center; }
     .list-item.disabled { 
-      opacity: 0.3 !important; 
+      opacity: 1 !important; 
       pointer-events: none !important; 
       background-color: #000 !important; 
       border-color: #555 !important;
-      color: #aaa !important;
+      color: #444 !important;
     }
     .selected-badge { color: #ff5555; font-weight: bold; font-size: 0.75rem; display: none; font-family: sans-serif; }
-    .list-item.disabled .selected-badge { display: block; }
+    .list-item.disabled .selected-badge { display: block; opacity: 0.7; }
 
     .bingo-overlay {
       display: none; position: fixed; top: 0; left: 0;
@@ -214,7 +199,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 32.0 (HIT Stamp)</div>
+  <div class="version-tag">Ver 33.0 (Path Fix)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -265,6 +250,7 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
+    
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -309,7 +295,8 @@
     let currentGenre = "BB1";
     let gameStarted = false; 
     
-    const PARTICIPANTS_PATH = 'bingo_participants_v29';
+    // ★定義漏れ修正: 接続先パスを定義
+    const PARTICIPANTS_PATH = 'bingo_v33_release';
 
     window.onload = function() {
       initGrid();
@@ -335,6 +322,19 @@
       }
     }
 
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          const wakeLock = await navigator.wakeLock.request('screen');
+          document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+              await navigator.wakeLock.request('screen');
+            }
+          });
+        }
+      } catch (err) { console.log("Wake Lock failed"); }
+    }
+
     function startGame() {
       const nameInput = document.getElementById('playerName');
       if(!nameInput.value.trim()) return alert("名前を入力してください");
@@ -345,7 +345,7 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // 参加登録
+      // ★修正: 正しく定義された定数を使ってpush
       db.ref(PARTICIPANTS_PATH).push({
         name: playerName,
         timestamp: Date.now()
@@ -375,6 +375,8 @@
         }
         renderGrid();
       });
+
+      requestWakeLock();
     }
 
     function manualRefresh() {
@@ -491,7 +493,8 @@
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
-            // opacityは廃止
+            // ★HIT時のスタイル修正（不透明度は維持）
+            cell.style.opacity = "1"; 
           }
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
