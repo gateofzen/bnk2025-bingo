@@ -143,7 +143,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 28.0 (Final Sync)</div>
+  <div class="version-tag">Ver 29.0 (Host Sync Fix)</div>
 
   <button id="resetButton" onclick="resetGame()">RESET</button>
   <div id="playerCounter" onclick="showPlayerList()">PLAYERS: 0</div>
@@ -183,8 +183,8 @@
       measurementId: "G-2LVWF4GVS5"
     };
 
-    // candidatesは省略（index.htmlと同じ）
     const candidates = [
+      // 省略（index.htmlと同じ）
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
       "BB1 Hous 1", "BB1 Hous 2", "BB1 Hous 3", "BB1 Hous 4", "BB1 Hous 5", "BB1 NOW 1", "BB1 NOW 2", "BB1 Queen", "BB1 TSFT",
@@ -234,9 +234,9 @@
     
     let playersData = []; 
     let winnersData = []; 
-    
-    // ★重要: DBパスを共通化
-    const PARTICIPANTS_PATH = 'game_participants_2025';
+
+    // ★重要: DBパスを一致させる (bingo_participants_v29)
+    const PARTICIPANTS_PATH = 'bingo_participants_v29';
 
     window.onload = function() {
       db.ref('gameState/history').once('value').then(snapshot => {
