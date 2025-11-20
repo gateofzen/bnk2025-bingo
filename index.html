@@ -89,20 +89,39 @@
       border: 3px solid #fff; 
       box-shadow: 0 0 20px rgba(255,255,255,0.5); 
       z-index: 10; 
-      opacity: 1; 
+      opacity: 1;
       transform: scale(1.02);
     }
+
+    /* ★修正: HITスタンプの透明度を調整 */
     .bingo-cell.hit::after {
       content: "HIT!";
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) rotate(-15deg);
-      font-size: 2.5rem; color: #FF0000; font-weight: 900;
-      text-shadow: 2px 2px 0 #FFF, -1px -1px 0 #FFF, 1px -1px 0 #FFF;
-      border: 3px solid #FF0000; padding: 2px 8px; border-radius: 8px;
-      background-color: rgba(255, 255, 255, 0.8);
+      font-size: 2.5rem; 
+      font-weight: 900;
+      
+      /* 文字色を半透明に */
+      color: rgba(255, 0, 0, 0.8); 
+      
+      /* 縁取りも半透明に */
+      text-shadow: 
+        2px 2px 0 rgba(255,255,255,0.4), 
+        -1px -1px 0 rgba(255,255,255,0.4), 
+        1px -1px 0 rgba(255,255,255,0.4), 
+        -1px 1px 0 rgba(255,255,255,0.4), 
+        1px 1px 0 rgba(255,255,255,0.4);
+      
+      /* 枠線も半透明に */
+      border: 3px solid rgba(255, 0, 0, 0.8); 
+      padding: 2px 8px; border-radius: 8px;
+      
+      /* 背景色をかなり薄く (0.8 -> 0.3) */
+      background-color: rgba(255, 255, 255, 0.3); 
+      
       pointer-events: none; white-space: nowrap; font-family: sans-serif;
-      box-shadow: 3px 3px 5px rgba(0,0,0,0.5);
+      box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
       animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     @keyframes stampIn {
@@ -197,7 +216,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 34.0 (Final Fixed)</div>
+  <div class="version-tag">Ver 33.0 (Transparent Hit)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -293,8 +312,7 @@
     let currentGenre = "BB1";
     let gameStarted = false; 
     
-    // ★共通パス (Ver34)
-    const PARTICIPANTS_PATH = 'bingo_v34_final';
+    const PARTICIPANTS_PATH = 'bingo_game_v32';
 
     window.onload = function() {
       initGrid();
@@ -319,6 +337,19 @@
       }
     }
 
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          const wakeLock = await navigator.wakeLock.request('screen');
+          document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+              await navigator.wakeLock.request('screen');
+            }
+          });
+        }
+      } catch (err) { console.log("Wake Lock error"); }
+    }
+
     function startGame() {
       const nameInput = document.getElementById('playerName');
       if(!nameInput.value.trim()) return alert("名前を入力してください");
@@ -329,7 +360,6 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★参加登録 (必ずpush)
       db.ref(PARTICIPANTS_PATH).push({
         name: playerName,
         timestamp: Date.now()
@@ -359,6 +389,8 @@
         }
         renderGrid();
       });
+
+      requestWakeLock();
     }
 
     function manualRefresh() {
@@ -475,7 +507,8 @@
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
-            // ★HIT時スタンプ＆不透明度維持
+            // 透明度高める (0.4 -> 0.3)
+            cell.style.opacity = "1"; 
           }
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
@@ -529,7 +562,8 @@
     }
 
     function getTextColor(text) {
-        if (text.startsWith("BSBi")) return '#DEFF66'; /* 薄い黄色 */
+        if (text.startsWith("BSBi")) return '#DEFF66';
+
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
             (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
             text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
