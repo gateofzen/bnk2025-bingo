@@ -31,7 +31,6 @@
       overscroll-behavior-y: none;
     }
 
-    /* バージョン表示 */
     .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
 
     #loginScreen { 
@@ -179,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 23.0 (Path Fixed)</div>
+  <div class="version-tag">Ver 24.0 (Connection Fix)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -315,15 +314,15 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★修正: players_v3 に保存（IDはセッションで保持）
-      sessionId = sessionStorage.getItem('bingo_session_id_v23');
+      // ★重要: players_final に保存（IDはセッションで保持）
+      sessionId = sessionStorage.getItem('bingo_session_id_v24');
       if(!sessionId) {
-          const newRef = db.ref('players_v3').push();
+          const newRef = db.ref('players_final').push(); // ★新しい保存先
           sessionId = newRef.key;
-          sessionStorage.setItem('bingo_session_id_v23', sessionId);
+          sessionStorage.setItem('bingo_session_id_v24', sessionId);
       }
 
-      db.ref('players_v3/' + sessionId).set({
+      db.ref('players_final/' + sessionId).set({
         name: playerName,
         timestamp: Date.now()
       });
@@ -365,7 +364,7 @@
 
     function exitAndClear() {
       if(!confirm("ゲームから退出しますか？")) return;
-      sessionStorage.removeItem('bingo_session_id_v23');
+      sessionStorage.removeItem('bingo_session_id_v24');
       window.location.search = 't=' + Date.now();
     }
 
