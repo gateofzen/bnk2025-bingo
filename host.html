@@ -29,6 +29,8 @@
       position: relative; overflow: hidden;
     }
 
+    .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
+
     .container {
       text-align: center; width: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -141,6 +143,7 @@
   </style>
 </head>
 <body>
+  <div class="version-tag">Ver 23.0 (Host Fixed)</div>
 
   <button id="resetButton" onclick="resetGame()">RESET</button>
   <div id="playerCounter" onclick="showPlayerList()">PLAYERS: 0</div>
@@ -180,7 +183,7 @@
       measurementId: "G-2LVWF4GVS5"
     };
 
-    // candidatesリストはindex.htmlと同じ（長いので省略）
+    // candidatesリストはindex.htmlと同じ（省略）
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -255,8 +258,8 @@
         }
       });
 
-      // ★修正: players_v2 を監視
-      db.ref('players_v2').on('value', snap => {
+      // ★修正: players_v3 を監視する
+      db.ref('players_v3').on('value', snap => {
         playersData = [];
         snap.forEach(child => playersData.push(child.val()));
         updateCounter();
@@ -431,8 +434,8 @@
       if(!confirm("ゲームをリセットしますか？\n（参加者リストも全て消去されます）")) return;
       db.ref('gameState').remove();
       db.ref('winners').remove();
-      // ★修正: players_v2 も完全消去
-      db.ref('players_v2').remove();
+      // ★修正: players_v3 を削除
+      db.ref('players_v3').remove();
       qrElement.style.display = 'block';
       location.reload();
     }
@@ -471,7 +474,7 @@
       else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
       else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
       else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
-      else if (text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") { bgColor = 'white'; textColor = 'black'; }
+      else if (text === "SKRILLEX") { bgColor = 'white'; textColor = 'black'; }
       
       element.style.backgroundColor = bgColor; element.style.color = textColor;
       if (!isHistoryItem) { element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; }
