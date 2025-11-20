@@ -83,14 +83,48 @@
       cursor: pointer; 
       user-select: none; 
       position: relative;
-      transition: opacity 0.3s ease;
+      transition: transform 0.1s ease; /* 動きを少しリッチに */
     }
+
+    /* ★HIT時のスタイル変更 */
     .bingo-cell.hit { 
       border: 3px solid #fff; 
-      box-shadow: 0 0 20px rgba(255,255,255,0.5); 
+      box-shadow: 0 0 15px rgba(255,255,255,0.8); 
       z-index: 10; 
-      /* ヒット時はかなり薄く */
-      opacity: 0.4;
+      opacity: 1; /* 半透明化を廃止 */
+      transform: scale(1.02); /* 少し大きくして強調 */
+    }
+
+    /* ★HITスタンプの追加 */
+    .bingo-cell.hit::after {
+      content: "HIT!";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-15deg);
+      font-size: 2.5rem;
+      color: #FF0000;
+      font-weight: 900;
+      text-shadow: 
+        2px 2px 0 #FFF, 
+        -1px -1px 0 #FFF,  
+        1px -1px 0 #FFF,
+        -1px 1px 0 #FFF,
+        1px 1px 0 #FFF;
+      border: 3px solid #FF0000;
+      padding: 2px 8px;
+      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.8);
+      pointer-events: none; /* スタンプの下の文字もクリック可能に（念のため） */
+      white-space: nowrap;
+      font-family: sans-serif; /* スタンプは読みやすいフォントで */
+      box-shadow: 3px 3px 5px rgba(0,0,0,0.5);
+      animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes stampIn {
+      from { transform: translate(-50%, -50%) scale(2) rotate(-15deg); opacity: 0; }
+      to { transform: translate(-50%, -50%) scale(1) rotate(-15deg); opacity: 1; }
     }
     
     .btn-random {
@@ -132,14 +166,14 @@
     .list-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
     .list-item { padding: 15px; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center; }
     .list-item.disabled { 
-      opacity: 1 !important; 
+      opacity: 0.3 !important; 
       pointer-events: none !important; 
       background-color: #000 !important; 
       border-color: #555 !important;
-      color: #444 !important;
+      color: #aaa !important;
     }
     .selected-badge { color: #ff5555; font-weight: bold; font-size: 0.75rem; display: none; font-family: sans-serif; }
-    .list-item.disabled .selected-badge { display: block; opacity: 0.7; }
+    .list-item.disabled .selected-badge { display: block; }
 
     .bingo-overlay {
       display: none; position: fixed; top: 0; left: 0;
@@ -180,7 +214,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 31.0 (Fix Count/Colors)</div>
+  <div class="version-tag">Ver 32.0 (HIT Stamp)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -231,7 +265,6 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
-    
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -276,8 +309,7 @@
     let currentGenre = "BB1";
     let gameStarted = false; 
     
-    // ★重要: Ver31として新しいパスで開始
-    const PARTICIPANTS_PATH = 'bingo_v31_entries';
+    const PARTICIPANTS_PATH = 'bingo_participants_v29';
 
     window.onload = function() {
       initGrid();
@@ -313,7 +345,7 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★修正: 毎回新規にpush（追記）する（ID管理は廃止）
+      // 参加登録
       db.ref(PARTICIPANTS_PATH).push({
         name: playerName,
         timestamp: Date.now()
@@ -459,7 +491,7 @@
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
-            cell.style.opacity = "0.4"; 
+            // opacityは廃止
           }
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
@@ -482,7 +514,6 @@
       
       if(currentBingo) {
         isBingo = true;
-        // 勝者は単純に名前と時間を送信
         db.ref('winners').push({ name: playerName, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
@@ -514,7 +545,6 @@
     }
 
     function getTextColor(text) {
-        // ★修正: BSBiを薄い黄色に
         if (text.startsWith("BSBi")) return '#DEFF66';
 
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
