@@ -178,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 25.0 (Robust ID)</div>
+  <div class="version-tag">Ver 27.0 (Force Unique ID)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -229,7 +229,6 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
-    
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -273,16 +272,31 @@
     let editingIndex = -1;
     let currentGenre = "BB1";
     let gameStarted = false; 
+    let myId = null;
 
-    // ★ID生成ロジック（シンプルかつ強力に）
-    function getDeviceId() {
-      let id = localStorage.getItem('bingo_user_id_v25');
-      if (!id) {
-        // ランダムな文字列を生成して保存
-        id = 'u_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
-        localStorage.setItem('bingo_user_id_v25', id);
+    // ★Ver 27.0: ID生成ロジックの刷新（try-catchで保護）
+    function getUniqueId() {
+      // メモリ上にIDがあればそれを使う
+      if(myId) return myId;
+
+      // LocalStorageから取得を試みる
+      try {
+          myId = localStorage.getItem('bingo_id_v27');
+      } catch(e) {
+          console.log('Storage access denied');
       }
-      return id;
+
+      // なければ新規発行
+      if (!myId) {
+          // Firebaseの機能を使って絶対に被らないIDを発行
+          myId = db.ref().push().key; 
+          try {
+              localStorage.setItem('bingo_id_v27', myId);
+          } catch(e) {
+              console.log('Storage write failed');
+          }
+      }
+      return myId;
     }
 
     window.onload = function() {
@@ -324,9 +338,9 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★IDを使ってparticipants_v25に登録
-      const deviceId = getDeviceId();
-      db.ref('participants_v25/' + deviceId).set({
+      // ★Ver 27.0: ID取得と登録（participants_v27）
+      const uid = getUniqueId();
+      db.ref('participants_v27/' + uid).set({
         name: playerName,
         timestamp: Date.now()
       });
@@ -368,7 +382,8 @@
 
     function exitAndClear() {
       if(!confirm("ゲームから退出しますか？")) return;
-      localStorage.removeItem('bingo_user_id_v25');
+      // IDもクリア
+      try { localStorage.removeItem('bingo_id_v27'); } catch(e){}
       window.location.search = 't=' + Date.now();
     }
 
@@ -497,8 +512,8 @@
       
       if(currentBingo) {
         isBingo = true;
-        const deviceId = getDeviceId();
-        db.ref('winners').push({ name: playerName, id: deviceId, timestamp: Date.now() });
+        const uid = getUniqueId();
+        db.ref('winners').push({ name: playerName, id: uid, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
       }
@@ -529,7 +544,7 @@
     }
 
     function getTextColor(text) {
-        if (text.startsWith("BSBi")) return 'white';
+        if (text.startsWith("BSBi")) return '#DEFF66'; /* ★修正: 黄色 */
 
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
             (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
