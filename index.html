@@ -178,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 20.0 (ID V2 & BSBi Fix)</div>
+  <div class="version-tag">Ver 21.0 (List & Count Fix)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -229,7 +229,6 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
-    
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -274,14 +273,12 @@
     let currentGenre = "BB1";
     let gameStarted = false; 
 
-    // ★修正: ユニークなIDを確実に生成してLocalStorageに保存
+    // ★ID生成ロジック（シンプルかつ強力に）
     function getDeviceId() {
-      // Ver20.0用として新しいキーを使う（以前のゴミデータを無視するため）
-      let id = localStorage.getItem('bingo_player_id_v20');
+      let id = localStorage.getItem('bingo_player_id_v21');
       if (!id) {
-        // 乱数 + タイムスタンプでほぼ確実なユニークID
-        id = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('bingo_player_id_v20', id);
+        id = 'p_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+        localStorage.setItem('bingo_player_id_v21', id);
       }
       return id;
     }
@@ -325,7 +322,7 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★修正: デバイスIDをキーにして登録（これで上書きされない）
+      // ★IDを使って登録（重複上書き防止）
       const deviceId = getDeviceId();
       db.ref('players/' + deviceId).set({
         name: playerName,
@@ -362,15 +359,14 @@
 
     function manualRefresh() {
       if(gameStarted) {
-         if(!confirm("再読み込みしますか？")) return;
+         if(!confirm("ビンゴカードが消えてしまう可能性があります。\n再読み込みしますか？")) return;
       }
       location.reload();
     }
 
     function exitAndClear() {
-      if(!confirm("退出してリセットしますか？")) return;
-      // IDもクリアして完全新規
-      localStorage.removeItem('bingo_player_id_v20');
+      if(!confirm("ゲームから退出しますか？")) return;
+      localStorage.removeItem('bingo_player_id_v21');
       window.location.search = 't=' + Date.now();
     }
 
@@ -499,10 +495,8 @@
       
       if(currentBingo) {
         isBingo = true;
-        // ビンゴ時もID付きで登録
         const deviceId = getDeviceId();
         db.ref('winners').push({ name: playerName, id: deviceId, timestamp: Date.now() });
-        
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
       }
@@ -533,9 +527,7 @@
     }
 
     function getTextColor(text) {
-        // ★修正: BSBi判定を最優先に
         if (text.startsWith("BSBi")) return 'white';
-
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
             (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
             text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
