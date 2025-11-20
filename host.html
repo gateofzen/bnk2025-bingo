@@ -180,6 +180,7 @@
       measurementId: "G-2LVWF4GVS5"
     };
 
+    // プレイヤーと同じリスト（長いので省略せずに書く場合はindex.htmlからコピー）
     const candidates = [
         "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
         "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -232,6 +233,15 @@
     let winnersData = []; 
 
     window.onload = function() {
+      // Wake Lock
+      document.addEventListener('click', async () => {
+        try {
+          if ('wakeLock' in navigator) {
+            await navigator.wakeLock.request('screen');
+          }
+        } catch(e) {}
+      }, { once: true });
+
       db.ref('gameState/history').once('value').then(snapshot => {
         const savedHistory = snapshot.val();
         if(savedHistory) {
@@ -425,11 +435,12 @@
       if (list.children.length > 5) list.removeChild(list.lastChild);
     }
 
+    // ★修正: 参加者リストは保持する
     function resetGame() {
-      if(!confirm("ゲームをリセットしますか？\n（参加者リストは残ります。全員消去する場合は管理画面から行ってください）")) return;
+      if(!confirm("ゲームをリセットしますか？\n（参加者リストは残ります）")) return;
       db.ref('gameState').remove();
       db.ref('winners').remove();
-      // db.ref('players').remove(); // ★プレイヤーリストは残す
+      // db.ref('players').remove(); // 削除しない
       qrElement.style.display = 'block';
       location.reload();
     }
