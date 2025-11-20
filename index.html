@@ -178,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 24.0 (Connection Fix)</div>
+  <div class="version-tag">Ver 25.0 (Robust ID)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -273,7 +273,17 @@
     let editingIndex = -1;
     let currentGenre = "BB1";
     let gameStarted = false; 
-    let sessionId = null;
+
+    // ★ID生成ロジック（シンプルかつ強力に）
+    function getDeviceId() {
+      let id = localStorage.getItem('bingo_user_id_v25');
+      if (!id) {
+        // ランダムな文字列を生成して保存
+        id = 'u_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+        localStorage.setItem('bingo_user_id_v25', id);
+      }
+      return id;
+    }
 
     window.onload = function() {
       initGrid();
@@ -301,7 +311,7 @@
             }
           });
         }
-      } catch (err) { console.log("Wake Lock error"); }
+      } catch (err) { console.log("Wake Lock failed"); }
     }
 
     function startGame() {
@@ -314,15 +324,9 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★重要: players_final に保存（IDはセッションで保持）
-      sessionId = sessionStorage.getItem('bingo_session_id_v24');
-      if(!sessionId) {
-          const newRef = db.ref('players_final').push(); // ★新しい保存先
-          sessionId = newRef.key;
-          sessionStorage.setItem('bingo_session_id_v24', sessionId);
-      }
-
-      db.ref('players_final/' + sessionId).set({
+      // ★IDを使ってparticipants_v25に登録
+      const deviceId = getDeviceId();
+      db.ref('participants_v25/' + deviceId).set({
         name: playerName,
         timestamp: Date.now()
       });
@@ -364,7 +368,7 @@
 
     function exitAndClear() {
       if(!confirm("ゲームから退出しますか？")) return;
-      sessionStorage.removeItem('bingo_session_id_v24');
+      localStorage.removeItem('bingo_user_id_v25');
       window.location.search = 't=' + Date.now();
     }
 
@@ -493,7 +497,8 @@
       
       if(currentBingo) {
         isBingo = true;
-        db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
+        const deviceId = getDeviceId();
+        db.ref('winners').push({ name: playerName, id: deviceId, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
       }
