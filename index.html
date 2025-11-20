@@ -178,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 19.0 (Session ID)</div>
+  <div class="version-tag">Ver 20.0 (ID V2 & BSBi Fix)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -229,6 +229,7 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
+    
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -273,6 +274,18 @@
     let currentGenre = "BB1";
     let gameStarted = false; 
 
+    // ★修正: ユニークなIDを確実に生成してLocalStorageに保存
+    function getDeviceId() {
+      // Ver20.0用として新しいキーを使う（以前のゴミデータを無視するため）
+      let id = localStorage.getItem('bingo_player_id_v20');
+      if (!id) {
+        // 乱数 + タイムスタンプでほぼ確実なユニークID
+        id = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('bingo_player_id_v20', id);
+      }
+      return id;
+    }
+
     window.onload = function() {
       initGrid();
     };
@@ -289,7 +302,6 @@
       }
     }
 
-    // スリープ防止（エラーが出ても無視して進む）
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
@@ -300,7 +312,7 @@
             }
           });
         }
-      } catch (err) { console.log("Wake Lock not supported or failed"); }
+      } catch (err) { console.log("Wake Lock failed"); }
     }
 
     function startGame() {
@@ -313,17 +325,9 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★修正: sessionStorageを使ったID管理（リロード耐性あり・ブラウザ閉じるとリセット）
-      let sessionId = sessionStorage.getItem('bingo_session_id');
-      if (!sessionId) {
-          // 新規セッションなら push してキーを取得
-          const newRef = db.ref('players').push();
-          sessionId = newRef.key;
-          sessionStorage.setItem('bingo_session_id', sessionId);
-      }
-
-      // 既存IDまたは新規IDで情報を更新（updateなので上書き）
-      db.ref('players/' + sessionId).set({
+      // ★修正: デバイスIDをキーにして登録（これで上書きされない）
+      const deviceId = getDeviceId();
+      db.ref('players/' + deviceId).set({
         name: playerName,
         timestamp: Date.now()
       });
@@ -358,15 +362,15 @@
 
     function manualRefresh() {
       if(gameStarted) {
-         if(!confirm("ビンゴカードが消えてしまう可能性があります。\n再読み込みしますか？")) return;
+         if(!confirm("再読み込みしますか？")) return;
       }
       location.reload();
     }
 
     function exitAndClear() {
-      if(!confirm("ゲームから退出しますか？\n(画面がおかしい場合などに使用してください)")) return;
-      // セッションIDもクリアして完全リセット
-      sessionStorage.removeItem('bingo_session_id');
+      if(!confirm("退出してリセットしますか？")) return;
+      // IDもクリアして完全新規
+      localStorage.removeItem('bingo_player_id_v20');
       window.location.search = 't=' + Date.now();
     }
 
@@ -495,8 +499,9 @@
       
       if(currentBingo) {
         isBingo = true;
-        const sessionId = sessionStorage.getItem('bingo_session_id');
-        db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
+        // ビンゴ時もID付きで登録
+        const deviceId = getDeviceId();
+        db.ref('winners').push({ name: playerName, id: deviceId, timestamp: Date.now() });
         
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
@@ -528,11 +533,11 @@
     }
 
     function getTextColor(text) {
-        // ★修正: BSBiを最優先で判定
+        // ★修正: BSBi判定を最優先に
         if (text.startsWith("BSBi")) return 'white';
 
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
-            (text.startsWith("BSB") && !text.startsWith("BSBi")) || // BSBかつBSBiでない
+            (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
             text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
         else if (text.startsWith("BSWi")) return '#FFEF7F';
         else if (text.includes("BTM")) return '#BD3EA4';
