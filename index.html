@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BNK2025 - HOST FINAL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BINGO PLAYER</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -15,157 +15,207 @@
       font-style: normal;
     }
 
-    body {
-      font-family: 'BrotherXL', Arial, sans-serif;
-      margin: 0; padding: 0;
-      background-color: black;
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      background-color: black; 
       background-image: url('./FC_logo.png');
       background-repeat: no-repeat;
       background-position: center center;
       background-attachment: fixed;
       background-size: cover;
-      display: flex; justify-content: center; align-items: center;
-      flex-direction: column; height: 100vh; color: white;
-      position: relative; overflow: hidden;
+      color: white; 
+      font-family: 'BrotherXL', sans-serif;
+      min-height: 100vh; margin: 0; padding-bottom: 80px;
+      touch-action: manipulation;
+      overscroll-behavior-y: none;
     }
 
-    .container {
-      text-align: center; width: 100%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
+
+    #loginScreen { 
+      position: fixed; top:0; left:0; width:100%; height:100%; 
+      background: rgba(0,0,0,0.9); 
+      z-index: 999; display: flex; flex-direction: column; 
+      justify-content: center; align-items: center; 
+    }
+    input[type="text"] { 
+      font-size: 1.5rem; padding: 15px; text-align: center; width: 80%; max-width: 300px;
+      border-radius: 8px; border: none; margin-bottom: 30px; 
+      font-family: 'BrotherXL', sans-serif;
+    }
+    .btn-start { 
+      padding: 15px 60px; font-size: 1.3rem; font-weight: bold;
+      background: linear-gradient(45deg, #FF9933, #FFCC00); 
+      border: none; border-radius: 50px; cursor: pointer; color: black;
+      box-shadow: 0 4px 15px rgba(255, 153, 51, 0.4);
+      font-family: 'BrotherXL', sans-serif;
     }
 
-    #result {
-      font-size: 9rem; font-weight: bold; margin-bottom: 10px;
-      display: inline-block; cursor: pointer;
-      text-shadow: 0 0 10px rgba(0,0,0,0.5);
-      min-height: 1.2em; line-height: 1.2; z-index: 10;
-    }
-    #result:active { transform: scale(0.98); }
-
-    #joinQr {
-      width: 220px; height: 220px; margin: 20px auto;
-      border: 6px solid white; border-radius: 15px;
-      display: block; box-shadow: 0 0 30px rgba(255,255,255,0.4); cursor: pointer;
-      transition: transform 0.1s;
-    }
-    #joinQr:active { transform: scale(0.95); }
-
-    #historyContainer {
-      margin-top: 20px; margin-bottom: 20px;
-      font-size: 2.1rem; text-align: center; min-height: 80px;
-    }
-    #historyList { list-style: none; padding: 0; margin: 0; }
-    #historyList li { margin: 3px; display: inline-block; }
-
-    #linkButton {
-      position: fixed; left: 30px; bottom: 30px; width: 80px; height: 80px;
-      background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);
-      cursor: pointer; transition: all 0.3s ease; text-decoration: none;
-      z-index: 1000; display: block;
-    }
-    #linkButton:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
-
-    #resetButton {
-      position: fixed; top: 20px; right: 20px;
-      background: rgba(0, 0, 0, 0.5); color: #aaa;
-      border: 1px solid #555; padding: 5px 10px;
-      font-size: 0.8rem; cursor: pointer; z-index: 1000;
-    }
-    #resetButton:hover { background: red; color: white; }
-
-    #playerCounter {
-      position: fixed; top: 20px; left: 20px;
-      font-size: 1.5rem; font-weight: bold; color: rgba(255,255,255,0.8);
-      text-shadow: 0 0 5px black; z-index: 1000;
-      cursor: pointer; padding: 5px 10px; border-radius: 5px;
-      transition: background 0.3s;
-    }
-    #playerCounter:hover { background: rgba(255, 255, 255, 0.2); color: white; }
-
-    .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; 
-      width: 100%; height: 100%; background: rgba(0,0,0,0.95);
-      z-index: 2000; flex-direction: column; 
-      justify-content: center; align-items: center;
-    }
-    .close-modal { 
-      padding: 10px 30px; font-size: 1.5rem; margin-top: 30px;
-      background: transparent; border: 2px solid white; 
-      color: white; cursor: pointer; border-radius: 30px;
-    }
-
-    .bingo-text { font-size: 8rem; font-weight: bold; color: #FF3300; margin-bottom: 20px; animation: popIn 0.5s; }
-    #winnerListContainer {
-      display: flex; flex-direction: column; align-items: center;
-      max-height: 60vh; overflow-y: auto; width: 100%;
-    }
-    .winner-name-item { 
-      font-size: 5rem; color: white; margin: 10px 0;
-      text-shadow: 0 0 20px #FF9933; animation: slideUp 0.5s ease-out;
-    }
-
-    .player-list-title { font-size: 3rem; font-weight: bold; color: #FF9933; margin-bottom: 30px; }
+    .container { max-width: 500px; margin: 0 auto; text-align: center; padding-top: 20px; }
     
-    #playerListContent {
-      display: grid; gap: 15px;
-      width: 90%; max-width: 1200px;
-      max-height: 70vh; overflow-y: auto; padding: 20px;
-      grid-template-columns: repeat(4, 1fr);
+    .bingo-grid {
+      display: grid; 
+      grid-template-columns: repeat(3, 1fr); 
+      grid-template-rows: repeat(3, 1fr);
+      gap: 8px;
+      width: 92vw; 
+      max-width: 400px; 
+      aspect-ratio: 1 / 1;
+      margin: 10px auto 20px auto;
     }
-    .grid-large { grid-template-columns: repeat(3, 1fr) !important; }
-    .grid-medium { grid-template-columns: repeat(4, 1fr) !important; }
-    .grid-small { grid-template-columns: repeat(5, 1fr) !important; }
 
-    .player-tile {
-      background: #222; border: 1px solid #555; border-radius: 15px;
+    .bingo-cell {
+      background: rgba(34, 34, 34, 0.9); 
+      border: 1px solid #444; 
+      border-radius: 12px;
+      width: 100%;
+      height: 100%;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;     
+      font-size: 0.85rem; 
+      font-weight: bold; 
+      line-height: 1.1;
+      text-align: center; 
+      word-break: break-word; 
+      padding: 2px; 
+      cursor: pointer; 
+      user-select: none; 
+      position: relative;
+      transition: opacity 0.3s ease;
+    }
+    .bingo-cell.hit { 
+      border: 3px solid #fff; 
+      box-shadow: 0 0 20px rgba(255,255,255,0.5); 
+      z-index: 10; 
+    }
+    
+    .btn-random {
+      background: #336699; color: #DEFF66; padding: 15px 0; 
+      border: none; border-radius: 12px; font-size: 1.1rem; 
+      font-weight: bold; cursor: pointer; width: 92vw; max-width: 400px;
+      margin-bottom: 10px; letter-spacing: 1px;
+      font-family: 'BrotherXL', sans-serif;
+    }
+    .btn-random.disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #status {
+      color: #FFFF00; font-size: 1.2rem; margin: 15px 0; 
+      min-height: 40px; font-weight: bold;
       display: flex; justify-content: center; align-items: center;
-      text-align: center; padding: 15px;
-      color: #ddd; font-weight: bold;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
     }
-    .player-tile:hover { transform: translateY(-2px); border-color: #888; }
-
-    .player-tile.is-winner {
-      background: linear-gradient(135deg, #332200, #664400);
-      border: 2px solid #FFD700; color: #FFD700;
-      box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    .status-badge {
+      display: inline-block; padding: 5px 15px; margin-left: 10px;
+      border-radius: 0;
+      font-size: 1rem; color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
 
-    .font-large { font-size: 2.5rem; height: 100px; }
-    .font-medium { font-size: 1.8rem; height: 80px; }
-    .font-small { font-size: 1.2rem; height: 60px; }
+    .modal { 
+      display: none; position: fixed; top: 0; left: 0; 
+      width: 100%; height: 100%; background: rgba(0,0,0,0.95); 
+      z-index: 1000; flex-direction: column; 
+    }
+    .modal-header { padding: 15px; background: #111; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+    .btn-close { 
+      background: #333; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-size: 0.9rem; 
+      font-family: 'BrotherXL', sans-serif;
+    }
+    
+    .genre-tabs { display: flex; overflow-x: auto; background: transparent; padding: 15px 10px; white-space: nowrap; }
+    .genre-tab { display: inline-block; padding: 8px 18px; margin-right: 8px; background: #222; border-radius: 20px; color: #888; font-size: 0.9rem; border: 1px solid #333; cursor: pointer; }
+    .genre-tab.active { background: #eee; color: #000; font-weight: bold; border-color: #fff; }
+    
+    .list-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
+    .list-item { padding: 15px; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+    .list-item.disabled { 
+      opacity: 0.3 !important; 
+      pointer-events: none !important; 
+      background-color: #000 !important; 
+      border-color: #555 !important;
+      color: #aaa !important;
+    }
+    .selected-badge { color: #ff5555; font-weight: bold; font-size: 0.75rem; display: none; font-family: sans-serif; }
+    .list-item.disabled .selected-badge { display: block; }
 
+    .bingo-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.95);
+      z-index: 2000; flex-direction: column;
+      justify-content: center; align-items: center;
+      animation: fadeIn 0.3s;
+    }
+    .bingo-text {
+      font-size: 5rem; font-weight: bold; color: #FF3300;
+      text-shadow: 0 0 20px #FF9933;
+      margin-bottom: 20px; animation: popIn 0.5s;
+    }
     @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    .close-bingo-btn {
+      padding: 10px 30px; font-size: 1.2rem; margin-top: 30px;
+      background: transparent; border: 2px solid white;
+      color: white; cursor: pointer; border-radius: 30px;
+      font-family: 'BrotherXL', sans-serif;
+    }
+
+    .footer-menu {
+      position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+      background: rgba(0,0,0,0.8); border-top: 1px solid #333;
+      display: flex; justify-content: center; align-items: center; gap: 20px;
+      z-index: 1500;
+    }
+    .footer-btn {
+      background: transparent; border: 1px solid #555; color: #aaa;
+      padding: 5px 15px; border-radius: 20px; font-size: 0.7rem;
+      cursor: pointer; font-family: sans-serif;
+    }
+    .footer-btn:hover { background: #333; color: white; }
+    .btn-exit { border-color: #662222; color: #cc6666; }
+    .btn-exit:hover { background: #331111; color: red; }
   </style>
 </head>
 <body>
+  <div class="version-tag">Ver 16.0 (Corrected Player)</div>
 
-  <button id="resetButton" onclick="resetGame()">RESET</button>
-  <div id="playerCounter" onclick="showPlayerList()">PLAYERS: 0</div>
+  <div id="loginScreen">
+    <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
+    <input type="text" id="playerName" placeholder="NAME">
+    <button class="btn-start" onclick="startGame()">GAME START</button>
+  </div>
 
-  <div class="container">
-    <p id="result">ARE U READY?</p>
-    <img id="joinQr" src="./qr-code.png" alt="Join Game" onclick="performDraw()">
-    <div id="historyContainer">
-      <p style="font-size:1rem; margin:0; opacity:0.7;">Past Results:</p>
-      <ul id="historyList"></ul>
+  <div id="gameScreen" class="container" style="display:none;">
+    <h2 id="displayName" style="margin:0; font-size:1.4rem; color:#ddd;">PLAYER</h2>
+    
+    <div id="status">READY...</div>
+    
+    <div class="controls">
+      <button class="btn-random" id="randomFillButton" onclick="randomFill()">AUTO FILL (RANDOM)</button>
+      <p style="color:#aaa; font-size:0.8rem; margin-top:8px; font-family:sans-serif;">開始後は変更できません</p>
     </div>
+    <div class="bingo-grid" id="grid"></div>
   </div>
 
-  <a href="https://gateofzen.github.io/screen/" target="_blank" id="linkButton"></a>
+  <div class="footer-menu">
+    <button class="footer-btn" onclick="manualRefresh()">↻ REFRESH</button>
+    <button class="footer-btn btn-exit" onclick="exitAndClear()">⚠ EXIT & CLEAR</button>
+  </div>
 
-  <div id="winnerModal" class="modal-overlay">
+  <div id="myBingoModal" class="bingo-overlay">
     <div class="bingo-text">BINGO!!!</div>
-    <div id="winnerListContainer"></div>
-    <button class="close-modal" onclick="closeModal('winnerModal')">CLOSE</button>
+    <div style="font-size: 1.5rem; margin-top: 20px;">CONGRATULATIONS!</div>
+    <button class="close-bingo-btn" onclick="closeModal('myBingoModal')">CLOSE</button>
   </div>
 
-  <div id="playerListModal" class="modal-overlay">
-    <div class="player-list-title">PARTICIPANTS</div>
-    <div id="playerListContent"></div>
-    <button class="close-modal" onclick="closeModal('playerListModal')">CLOSE</button>
+  <div id="selectorModal" class="modal">
+    <div class="modal-header">
+      <span style="font-weight:bold; font-size:1.1rem;">SELECT PROGRAM</span>
+      <button class="btn-close" onclick="closeModal('selectorModal')">CLOSE</button>
+    </div>
+    <div class="genre-tabs" id="genreTabs"></div>
+    <div class="list-container" id="programList"></div>
   </div>
 
   <script>
@@ -179,309 +229,301 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
-
     const candidates = [
-        "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
-        "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
-        "BB1 Hous 1", "BB1 Hous 2", "BB1 Hous 3", "BB1 Hous 4", "BB1 Hous 5", "BB1 NOW 1", "BB1 NOW 2", "BB1 Queen", "BB1 TSFT",
-        "FEEL NOW B1", "FEEL NOW B2", "FEEL NOW B3", "FEEL NOW B4", "FEEL NOW G1", "FEEL NOW G2", "FEEL NOW G3", "FEEL NOW S1", "FEEL NOW S2", "FEEL NOW S3",
-        "8th SP", "9th SP 1", "9th SP 2", "10th SP",
-        "BB2 10s 1", "BB2 10s 2", "BB2 10s 3", "BB2 10s 4", "BB2 1D", "BB2 2016", "BB2 2017", "BB2 2018", "BB2 2019", "BB2 3Y-1", "BB2 3Y-2",
-        "BB2 90s 1", "BB2 90s 2", "BB2 ADELE", "BB2 ARGD", "BB2 Avicii", "BB2 BEYONCE", "BB2 BMLY", "BB2 BNJV", "BB2 BRIT 2023", "BB2 BRIT 2025",
-        "BB2 BRJ", "BB2 BRMS", "BB2 BRMS 2", "BB2 BTLS 1", "BB2 BTLS 2", "BB2 BTLS 3", "BB2 CDPY", "BB2 CDPY 2", "BB2 CHARLI",
-        "BB2 Comp 1", "BB2 Comp 2", "BB2 Comp 3", "BB2 Comp 4", "BB2 Comp 5", "BB2 Comp 6", "BB2 Comp 7", "BB2 CSBW", "BB2 CSBW 2", "BB2 CVHS",
-        "BB2 Deep 1", "BB2 Deep 2", "BB2 Deep 3", "BB2 Dua Lipa", "BB2 Dua Lipa 2", "BB2 DVGT", "BB2 EDM",
-        "BB2 EDSR", "BB2 EMINEM", "BB2 FLG", "BB2 FOB", "BB2 GRDY", "BB2 GRMY 66",
-        "BB2 Hit 1", "BB2 Hit 2", "BB2 Hit 3", "BB2 Hit 4", "BB2 Hit 5", "BB2 Hit 6", "BB2 Hit 7", "BB2 Hit 8", "BB2 Hit 9", "BB2 Hit 10",
-        "BB2 Hit 11", "BB2 Hit 12", "BB2 Hit 13", "BB2 Hit 14", "BB2 Hit 15", "BB2 Hit 16", "BB2 Hit 17", "BB2 Hit 18", "BB2 Hit 19", "BB2 Hit 20", "BB2 Hit 21", "BB2 Hit 22",
-        "BB2 HH 1", "BB2 HH 2", "BB2 Hous 1", "BB2 Hous 2", "BB2 Hous 3", "BB2 Hous 4", "BB2 Hous 6", "BB2 Hous 7",
-        "BB2 Jazz 1", "BB2 JONAS", "BB2 JUSTIN", "BB2 KYGO", "BB2 LDGG", "BB2 LDGG 2", "BB2 MDNA", "BB2 MRN5", "BB2 MTGX", "BB2 Metal 1", "BB2 Metal 2",
-        "BB2 MJ 1", "BB2 MJ 2", "BB2 MJ 3", "BB2 MLN 1", "BB2 MLN 2", "BB2 MLN 3", "BB2 Movie 1", "BB2 Movie 2", "BB2 NE-YO", "BB2 NOW 1", "BB2 NOW 2",
-        "BB2 P!NK", "BB2 PTX", "BB2 QOP", "BB2 Queen", "BB2 R&B 1", "BB2 R&B 2", "BB2 Regg 1", "BB2 Regg 2", "BB2 RHCP", "BB2 RHNA", "BB2 Rock 1", "BB2 Rock 2",
-        "BB2 SIGALA", "BB2 SMST", "BB2 Soul 1", "BB2 Soul 2", "BB2 SUMR 1", "BB2 SUMR 2", "BB2 UPGD 1", "BB2 UPGD 2", "BB2 UPGD 3", "BB2 USHER", "BB2 USHER 2",
-        "BB2 Xmas 2", "BB2 Xmas 3", "BB2 Xmas 4", "BB2 ZEDD", "SKRILLEX", "BEERCYCLE", "FEEL DEEP", "FEEL HIGH",
-        "L 25 BTM", "L 25 FEEL", "L 25 FREE",
-        "BB3 10s 1", "BB3 Comp 1", "BB3 Deep 1", "BB3 HH 1", "BB3 HH 2", "BB3 Hit 1", "BB3 Hit 2", "BB3 Hit 3", "BB3 Hit 4", "BB3 Hit 5", "BB3 Hit 6",
-        "BB3 Hous 1", "BB3 Hous 2", "BB3 Hous 3", "BB3 Hous 4", "BB3 IRMD", "BB3 Regg 1", "BB3 Rock 1", "BB3 Rock 2", "BB3 Soul 1", "BB3 UPGD 1", "BB3 World 1",
-        "BSB 10s 1", "BSB Comp 1", "BSB Deep 1", "BSB HH 2", "BSB Hit 1", "BSB Hit 2", "BSB Hit 3", "BSB Hit 4", "BSB Hit 5", "BSB Hit 6", "BSB Hit 7",
-        "BSB Hous 1", "BSB Jazz 1", "BSB Regg 1", "BSB Rock 1", "BSBi BMLY", "BSBi Deep 1", "BSBi Hous 1", "BSBi Hous 2",
-        "L 24 FEEL", "L 24 FEEL 2", "L 24 FREE", "L 24 FREE 2",
-        "BSL Comp 1", "BSL Deep 1", "BSL Deep 2", "BSL Deep 3", "BSL Deep 4", "BSL Hit 1", "BSL Hit 2", "BSL Hit 3", "BSL Hit 4", "BSL Hit 5", "BSL Hit 6", "BSL Hit 7", "BSL Hit 8",
-        "BSL Hous 1", "BSL Hous 2", "BSL R&B 1", "BSL Rock 1",
-        "BSW 10s 1", "BSW Comp 1", "BSW Comp 2", "BSW Comp 3", "BSW Hit 1", "BSW Hit 2", "BSW Hit 3", "BSW Hit 4", "BSW Hit 5", "BSW Hit 6", "BSW Hit 7", "BSW Hit 8",
-        "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
-        "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
+      "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
+      "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
+      "BB1 Hous 1", "BB1 Hous 2", "BB1 Hous 3", "BB1 Hous 4", "BB1 Hous 5", "BB1 NOW 1", "BB1 NOW 2", "BB1 Queen", "BB1 TSFT",
+      "FEEL NOW B1", "FEEL NOW B2", "FEEL NOW B3", "FEEL NOW B4", "FEEL NOW G1", "FEEL NOW G2", "FEEL NOW G3", "FEEL NOW S1", "FEEL NOW S2", "FEEL NOW S3",
+      "8th SP", "9th SP 1", "9th SP 2", "10th SP",
+      "BB2 10s 1", "BB2 10s 2", "BB2 10s 3", "BB2 10s 4", "BB2 1D", "BB2 2016", "BB2 2017", "BB2 2018", "BB2 2019", "BB2 3Y-1", "BB2 3Y-2",
+      "BB2 90s 1", "BB2 90s 2", "BB2 ADELE", "BB2 ARGD", "BB2 Avicii", "BB2 BEYONCE", "BB2 BMLY", "BB2 BNJV", "BB2 BRIT 2023", "BB2 BRIT 2025",
+      "BB2 BRJ", "BB2 BRMS", "BB2 BRMS 2", "BB2 BTLS 1", "BB2 BTLS 2", "BB2 BTLS 3", "BB2 CDPY", "BB2 CDPY 2", "BB2 CHARLI",
+      "BB2 Comp 1", "BB2 Comp 2", "BB2 Comp 3", "BB2 Comp 4", "BB2 Comp 5", "BB2 Comp 6", "BB2 Comp 7", "BB2 CSBW", "BB2 CSBW 2", "BB2 CVHS",
+      "BB2 Deep 1", "BB2 Deep 2", "BB2 Deep 3", "BB2 Dua Lipa", "BB2 Dua Lipa 2", "BB2 DVGT", "BB2 EDM",
+      "BB2 EDSR", "BB2 EMINEM", "BB2 FLG", "BB2 FOB", "BB2 GRDY", "BB2 GRMY 66",
+      "BB2 Hit 1", "BB2 Hit 2", "BB2 Hit 3", "BB2 Hit 4", "BB2 Hit 5", "BB2 Hit 6", "BB2 Hit 7", "BB2 Hit 8", "BB2 Hit 9", "BB2 Hit 10",
+      "BB2 Hit 11", "BB2 Hit 12", "BB2 Hit 13", "BB2 Hit 14", "BB2 Hit 15", "BB2 Hit 16", "BB2 Hit 17", "BB2 Hit 18", "BB2 Hit 19", "BB2 Hit 20", "BB2 Hit 21", "BB2 Hit 22",
+      "BB2 HH 1", "BB2 HH 2", "BB2 Hous 1", "BB2 Hous 2", "BB2 Hous 3", "BB2 Hous 4", "BB2 Hous 6", "BB2 Hous 7",
+      "BB2 Jazz 1", "BB2 JONAS", "BB2 JUSTIN", "BB2 KYGO", "BB2 LDGG", "BB2 LDGG 2", "BB2 MDNA", "BB2 MRN5", "BB2 MTGX", "BB2 Metal 1", "BB2 Metal 2",
+      "BB2 MJ 1", "BB2 MJ 2", "BB2 MJ 3", "BB2 MLN 1", "BB2 MLN 2", "BB2 MLN 3", "BB2 Movie 1", "BB2 Movie 2", "BB2 NE-YO", "BB2 NOW 1", "BB2 NOW 2",
+      "BB2 P!NK", "BB2 PTX", "BB2 QOP", "BB2 Queen", "BB2 R&B 1", "BB2 R&B 2", "BB2 Regg 1", "BB2 Regg 2", "BB2 RHCP", "BB2 RHNA", "BB2 Rock 1", "BB2 Rock 2",
+      "BB2 SIGALA", "BB2 SMST", "BB2 Soul 1", "BB2 Soul 2", "BB2 SUMR 1", "BB2 SUMR 2", "BB2 UPGD 1", "BB2 UPGD 2", "BB2 UPGD 3", "BB2 USHER", "BB2 USHER 2",
+      "BB2 Xmas 2", "BB2 Xmas 3", "BB2 Xmas 4", "BB2 ZEDD", "SKRILLEX", "BEERCYCLE", "FEEL DEEP", "FEEL HIGH",
+      "L 25 BTM", "L 25 FEEL", "L 25 FREE",
+      "BB3 10s 1", "BB3 Comp 1", "BB3 Deep 1", "BB3 HH 1", "BB3 HH 2", "BB3 Hit 1", "BB3 Hit 2", "BB3 Hit 3", "BB3 Hit 4", "BB3 Hit 5", "BB3 Hit 6",
+      "BB3 Hous 1", "BB3 Hous 2", "BB3 Hous 3", "BB3 Hous 4", "BB3 IRMD", "BB3 Regg 1", "BB3 Rock 1", "BB3 Rock 2", "BB3 Soul 1", "BB3 UPGD 1", "BB3 World 1",
+      "BSB 10s 1", "BSB Comp 1", "BSB Deep 1", "BSB HH 2", "BSB Hit 1", "BSB Hit 2", "BSB Hit 3", "BSB Hit 4", "BSB Hit 5", "BSB Hit 6", "BSB Hit 7",
+      "BSB Hous 1", "BSB Jazz 1", "BSB Regg 1", "BSB Rock 1", "BSBi BMLY", "BSBi Deep 1", "BSBi Hous 1", "BSBi Hous 2",
+      "L 24 FEEL", "L 24 FEEL 2", "L 24 FREE", "L 24 FREE 2",
+      "BSL Comp 1", "BSL Deep 1", "BSL Deep 2", "BSL Deep 3", "BSL Deep 4", "BSL Hit 1", "BSL Hit 2", "BSL Hit 3", "BSL Hit 4", "BSL Hit 5", "BSL Hit 6", "BSL Hit 7", "BSL Hit 8",
+      "BSL Hous 1", "BSL Hous 2", "BSL R&B 1", "BSL Rock 1",
+      "BSW 10s 1", "BSW Comp 1", "BSW Comp 2", "BSW Comp 3", "BSW Hit 1", "BSW Hit 2", "BSW Hit 3", "BSW Hit 4", "BSW Hit 5", "BSW Hit 6", "BSW Hit 7", "BSW Hit 8",
+      "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
+      "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
     ];
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const resultElement = document.getElementById('result');
-    const qrElement = document.getElementById('joinQr');
-    const historyList = document.getElementById('historyList');
-    const playerCounter = document.getElementById('playerCounter');
-
-    let availableCandidates = [...candidates];
-    let history = [];
-    let lastGenre = null;
-    let sameGenreCount = 0;
-    let isAnimating = false;
-    let animationInterval = null;
-    
-    let playersData = []; 
-    let winnersData = []; 
+    let myCard = new Array(9).fill(null);
+    let playerName = "";
+    let drawnHistory = [];
+    let isBingo = false;
+    let editingIndex = -1;
+    let currentGenre = "BB1";
+    let gameStarted = false; 
 
     window.onload = function() {
-      // ★Wake Lock (画面常時オン) をクリックで有効化
-      document.addEventListener('click', async () => {
-        try {
-          if ('wakeLock' in navigator) {
-            await navigator.wakeLock.request('screen');
-          }
-        } catch(e) { console.log(e); }
-      }, { once: true });
-
-      db.ref('gameState/history').once('value').then(snapshot => {
-        const savedHistory = snapshot.val();
-        if(savedHistory) {
-          const reversed = [...savedHistory].reverse();
-          reversed.forEach(item => {
-            const idx = availableCandidates.indexOf(item);
-            if(idx > -1) availableCandidates.splice(idx, 1);
-            updateGenreLogic(item);
-            addToHistoryUI(item);
-          });
-
-          if(savedHistory.length > 0) {
-            const latest = savedHistory[0];
-            resultElement.textContent = latest;
-            applyStyle(resultElement, latest);
-            qrElement.style.display = 'none';
-          } else {
-            qrElement.style.display = 'block';
-          }
-        }
-      });
-
-      db.ref('players').on('value', snap => {
-        playersData = [];
-        snap.forEach(child => playersData.push(child.val()));
-        updateCounter();
-      });
-
-      db.ref('winners').on('value', snap => {
-        winnersData = [];
-        snap.forEach(child => winnersData.push(child.val()));
-        winnersData.sort((a, b) => a.timestamp - b.timestamp);
-        updateCounter();
-      });
-
-      db.ref('winners').on('child_added', (snapshot) => {
-        const winner = snapshot.val();
-        if (winner.timestamp > Date.now() - 10000) {
-            addWinnerPopup(winner.name);
-        }
-      });
+      initGrid();
     };
 
-    function updateCounter() {
-      const remaining = Math.max(0, playersData.length - winnersData.length);
-      playerCounter.textContent = `PLAYERS: ${remaining}`;
+    function initGrid() {
+      const gridEl = document.getElementById('grid');
+      gridEl.innerHTML = "";
+      for(let i=0; i<9; i++) {
+        const div = document.createElement('div');
+        div.className = 'bingo-cell';
+        div.innerHTML = "<span style='color:#999'>TAP</span>";
+        div.onclick = openSelector.bind(null, i);
+        gridEl.appendChild(div);
+      }
     }
 
-    function showPlayerList() {
-      const listContainer = document.getElementById('playerListContent');
-      listContainer.innerHTML = "";
-      listContainer.className = ""; 
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          const wakeLock = await navigator.wakeLock.request('screen');
+          document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+              await navigator.wakeLock.request('screen');
+            }
+          });
+        }
+      } catch (err) { console.log("Wake Lock not supported or failed"); }
+    }
+
+    function startGame() {
+      const nameInput = document.getElementById('playerName');
+      if(!nameInput.value.trim()) return alert("名前を入力してください");
       
-      const total = playersData.length;
-      if(total <= 15) {
-        listContainer.classList.add('grid-large'); 
-      } else if(total <= 30) {
-        listContainer.classList.add('grid-medium'); 
-      } else {
-        listContainer.classList.add('grid-small'); 
-      }
+      playerName = nameInput.value.trim();
       
-      const fontClass = total <= 15 ? 'font-large' : (total <= 30 ? 'font-medium' : 'font-small');
+      document.getElementById('displayName').textContent = playerName;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('gameScreen').style.display = 'block';
 
-      if(total === 0) {
-        listContainer.innerHTML = "<div style='color:#999; grid-column: 1 / -1;'>参加者はまだいません</div>";
-      } else {
-        const winnerRankMap = {};
-        winnersData.forEach((w, index) => {
-           winnerRankMap[w.name] = index + 1;
-        });
+      // ★参加登録
+      db.ref('players').push({
+        name: playerName,
+        timestamp: Date.now()
+      });
 
-        let displayList = [];
-        winnersData.forEach((w, index) => {
-           displayList.push({ name: w.name, rank: index + 1, isWinner: true });
-        });
-        playersData.forEach(p => {
-           if(!winnerRankMap[p.name]) {
-             displayList.push({ name: p.name, rank: null, isWinner: false });
-           }
-        });
+      db.ref('gameState/history').on('value', (snapshot) => {
+        if(isBingo) return;
 
-        displayList.forEach(item => {
-          const div = document.createElement('div');
-          div.className = `player-tile ${fontClass}`;
+        drawnHistory = snapshot.val() || [];
+        const statusEl = document.getElementById('status');
+        
+        if(drawnHistory.length > 0) {
+          gameStarted = true; 
+          document.getElementById('randomFillButton').classList.add('disabled');
           
-          if(item.isWinner) {
-             div.classList.add('is-winner');
-             div.innerHTML = `<span>👑 No.${item.rank}<br>${item.name}</span>`;
-          } else {
-             div.textContent = item.name;
-          }
-          listContainer.appendChild(div);
-        });
+          statusEl.innerHTML = "LATEST: ";
+          const badge = document.createElement('span');
+          badge.className = "status-badge";
+          badge.textContent = drawnHistory[0];
+          badge.style.backgroundColor = getBgColor(drawnHistory[0]);
+          badge.style.color = getTextColor(drawnHistory[0]);
+          statusEl.appendChild(badge);
+        } else {
+          statusEl.textContent = "READY...";
+          gameStarted = false; 
+          document.getElementById('randomFillButton').classList.remove('disabled');
+        }
+        renderGrid();
+      });
+
+      requestWakeLock();
+    }
+
+    // ★リフレッシュ機能
+    function manualRefresh() {
+      if(gameStarted) {
+         if(!confirm("ビンゴカードが消えてしまう可能性があります。\n再読み込みしますか？")) return;
       }
-      document.getElementById('playerListModal').style.display = 'flex';
+      location.reload();
+    }
+
+    // ★退出＆キャッシュクリア
+    function exitAndClear() {
+      if(!confirm("ゲームから退出しますか？\n(画面がおかしい場合などに使用してください)")) return;
+      window.location.search = 't=' + Date.now();
+    }
+
+    function randomFill() {
+      if(gameStarted) return; 
+      const pool = [...candidates];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      myCard = pool.slice(0, 9);
+      renderGrid();
+    }
+
+    function openSelector(index) {
+      if(gameStarted) return; 
+      editingIndex = index;
+      document.getElementById('selectorModal').style.display = 'flex';
+      currentGenre = "BB1";
+      renderTabs();
+      renderList("BB1");
     }
 
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
     }
 
-    function getGenre(text) {
-      if (text.startsWith("FEEL")) return "FEEL";
-      if (text.startsWith("L 24") || text.startsWith("L 25")) return "LIMITED";
-      if (text.startsWith("BSW")) return "BSW";
-      if (text.startsWith("BSB")) return "BSB";
-      if (text.startsWith("BSL")) return "BSL";
-      if (text.startsWith("BB3")) return "BB3";
-      if (text.startsWith("BB2")) return "BB2";
-      if (text.startsWith("BB1")) return "BB1";
-      if (text.includes("SP") || text.startsWith("ITS") || text === "ZEDD MIX" || text === "BEERCYCLE" || text === "SKRILLEX") return "SP";
-      return "OTHER";
-    }
-
-    function updateGenreLogic(selectedCandidate) {
-      const currentGenre = getGenre(selectedCandidate);
-      if (currentGenre === lastGenre) sameGenreCount++; else sameGenreCount = 1;
-      lastGenre = currentGenre;
-    }
-
-    function drawRandomCandidate() {
-      let selectedCandidate;
-      let selectedIndex;
-      if (lastGenre !== null) {
-        let needDifferentGenre = false;
-        if (lastGenre === "BB2" && sameGenreCount >= 2) needDifferentGenre = true;
-        else if (lastGenre !== "BB2" && sameGenreCount >= 1) needDifferentGenre = true;
-        
-        if (needDifferentGenre) {
-          const diff = availableCandidates.filter(c => getGenre(c) !== lastGenre);
-          if (diff.length > 0) {
-            selectedCandidate = diff[Math.floor(Math.random() * diff.length)];
-            selectedIndex = availableCandidates.indexOf(selectedCandidate);
-          }
-        }
-      }
-      if (!selectedCandidate) {
-        selectedIndex = Math.floor(Math.random() * availableCandidates.length);
-        selectedCandidate = availableCandidates[selectedIndex];
-      }
-      availableCandidates.splice(selectedIndex, 1);
-      updateGenreLogic(selectedCandidate);
-      return selectedCandidate;
-    }
-
-    function performDraw() {
-      if (isAnimating) return;
-      if (availableCandidates.length === 0) {
-        resultElement.textContent = "ALL COMPLETED!";
-        applyStyle(resultElement, "");
-        qrElement.style.display = 'none';
-        return;
-      }
-      qrElement.style.display = 'none';
-      isAnimating = true;
-      const finalResult = drawRandomCandidate();
-
-      animationInterval = setInterval(() => {
-        const temp = availableCandidates[Math.floor(Math.random() * availableCandidates.length)] || finalResult;
-        resultElement.textContent = temp;
-        applyStyle(resultElement, temp);
-      }, 100);
-
-      setTimeout(() => {
-        clearInterval(animationInterval);
-        resultElement.textContent = finalResult;
-        applyStyle(resultElement, finalResult);
-        addToHistoryUI(finalResult);
-        updateFirebase(finalResult);
-        isAnimating = false;
-        if (availableCandidates.length === 0) setTimeout(() => alert("全てのプログラムが終了しました！"), 1000);
-      }, 1300);
-    }
-
-    function updateFirebase(result) {
-      db.ref('gameState/history').once('value').then(snapshot => {
-        const currentHistory = snapshot.val() || [];
-        const newHistory = [result, ...currentHistory];
-        db.ref('gameState').set({ history: newHistory, lastUpdate: Date.now() });
+    function renderTabs() {
+      const tabContainer = document.getElementById('genreTabs');
+      tabContainer.innerHTML = "";
+      const genres = ["BB1", "BB2", "BB3", "BSW", "BSB", "BSL", "BSWi", "BSBi", "FEEL", "L 24/25", "SP/OTHER"];
+      genres.forEach(g => {
+        const span = document.createElement('span');
+        span.className = 'genre-tab';
+        if(g === currentGenre) span.classList.add('active');
+        span.textContent = g;
+        span.onclick = function() {
+          currentGenre = g; renderTabs(); renderList(g);
+        };
+        tabContainer.appendChild(span);
       });
     }
 
-    function addToHistoryUI(item) {
-      const li = document.createElement('li');
-      li.textContent = item;
-      applyStyle(li, item, true);
-      const list = document.getElementById('historyList');
-      list.prepend(li);
-      if (history.length > 5) history.pop();
-      if (list.children.length > 5) list.removeChild(list.lastChild);
-    }
-
-    function resetGame() {
-      if(!confirm("ゲームをリセットしますか？履歴とプレイヤーの状態が全て消去されます。")) return;
-      db.ref('gameState').remove();
-      db.ref('winners').remove();
-      db.ref('players').remove();
-      qrElement.style.display = 'block';
-      location.reload();
-    }
-
-    function addWinnerPopup(name) {
-      const container = document.getElementById('winnerListContainer');
-      const modal = document.getElementById('winnerModal');
-      const div = document.createElement('div');
-      div.className = 'winner-name-item';
-      div.textContent = name;
-      container.appendChild(div);
-      modal.style.display = 'flex';
-    }
-
-    resultElement.addEventListener('click', performDraw);
-
-    function applyStyle(element, text, isHistoryItem = false) {
-      element.removeAttribute('style'); element.removeAttribute('class');
-      let bgColor = 'transparent'; let textColor = 'white';
-      if (text.startsWith("BB1")) { bgColor = '#FFFF00'; textColor = 'black'; }
-      else if (text.startsWith("BB2")) { bgColor = '#FF9933'; textColor = 'black'; }
-      else if (text.startsWith("BB3")) { bgColor = '#FF3300'; textColor = 'black'; }
-      else if (text.startsWith("BSBi")) { bgColor = '#336699'; textColor = '#DEFF66'; }
-      else if (text.startsWith("BSB")) { bgColor = '#00CCFF'; textColor = 'black'; }
-      else if (text.startsWith("BSWi")) { bgColor = '#990099'; textColor = '#FFEF7F'; }
-      else if (text.startsWith("BSW")) { bgColor = '#CC66FF'; textColor = 'white'; }
-      else if (text.startsWith("BSL")) { bgColor = '#0000CC'; textColor = 'white'; }
-      else if (text.includes("FEEL NOW G")) { bgColor = '#B08A3A'; textColor = 'white'; }
-      else if (text.includes("FEEL NOW S")) { bgColor = '#666666'; textColor = 'white'; }
-      else if (text.includes("FEEL NOW B")) { bgColor = '#00121C'; textColor = 'white'; }
-      else if (text.includes("FEEL HIGH")) { bgColor = 'white'; textColor = 'black'; }
-      else if (text.includes("FEEL DEEP")) { bgColor = 'white'; textColor = 'black'; }
-      else if (text.includes("BTM")) { bgColor = '#00121C'; textColor = '#BD3EA4'; }
-      else if (text.includes("FREE")) { bgColor = '#00121C'; textColor = '#D61C1C'; }
-      else if (text.startsWith("FEEL NOW")) { bgColor = '#00121C'; textColor = 'white'; }
-      else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
-      else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
-      else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
-      else if (text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") { bgColor = 'white'; textColor = 'black'; }
+    function renderList(genre) {
+      const listContainer = document.getElementById('programList');
+      listContainer.innerHTML = "";
+      listContainer.scrollTop = 0;
       
-      element.style.backgroundColor = bgColor; element.style.color = textColor;
-      if (!isHistoryItem) { element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; }
-      else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; }
+      const filtered = candidates.filter(prog => {
+        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("SKRILLEX") || prog === "BEERCYCLE";
+        if (genre === "L 24/25") return prog.startsWith("L 24") || prog.startsWith("L 25");
+        if (genre === "FEEL") return prog.startsWith("FEEL"); 
+        return prog.startsWith(genre);
+      });
+      
+      filtered.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+
+      filtered.forEach(prog => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = prog;
+        div.appendChild(nameSpan); 
+        const badge = document.createElement('span');
+        badge.className = 'selected-badge';
+        badge.textContent = "選択済";
+        div.appendChild(badge); 
+
+        div.style.backgroundColor = getBgColor(prog); 
+        div.style.color = getTextColor(prog);
+
+        const isAlreadySelected = myCard.some((c, idx) => c === prog && idx !== editingIndex);
+        if(isAlreadySelected) {
+          div.classList.add('disabled');
+        } else {
+          div.onclick = function() {
+            myCard[editingIndex] = prog;
+            closeModal('selectorModal');
+            renderGrid();
+          };
+        }
+        listContainer.appendChild(div);
+      });
+    }
+
+    function renderGrid() {
+      const cells = document.getElementsByClassName('bingo-cell');
+      let hits = new Array(9).fill(false);
+
+      for(let i=0; i<9; i++) {
+        const text = myCard[i];
+        const cell = cells[i];
+        cell.innerHTML = "";
+        cell.removeAttribute("style"); 
+        cell.className = "bingo-cell"; 
+
+        if(text) {
+          cell.textContent = text;
+          cell.style.backgroundColor = getBgColor(text);
+          cell.style.color = getTextColor(text);
+          cell.style.borderRadius = "12px"; 
+
+          if(drawnHistory.includes(text)) {
+            hits[i] = true;
+            cell.classList.add('hit');
+            cell.style.opacity = "0.4"; 
+          }
+        } else {
+          cell.innerHTML = "<span style='color:#999'>TAP</span>";
+          cell.style.backgroundColor = "rgba(34,34,34,0.9)";
+          cell.style.color = "white"; 
+          cell.style.borderRadius = "12px"; 
+        }
+      }
+      checkBingo(hits);
+    }
+
+    function checkBingo(hits) {
+      if(isBingo) return;
+
+      const lines = [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]];
+      let currentBingo = false;
+      for(let line of lines) {
+        if(hits[line[0]] && hits[line[1]] && hits[line[2]]) currentBingo = true;
+      }
+      
+      if(currentBingo) {
+        isBingo = true;
+        db.ref('winners').push({ name: playerName, timestamp: Date.now() });
+        document.getElementById('myBingoModal').style.display = 'flex';
+        db.ref('gameState/history').off();
+      }
+    }
+
+    function getBgColor(text) {
+        if (text.startsWith("BB1")) return '#FFFF00';
+        else if (text.startsWith("BB2")) return '#FF9933';
+        else if (text.startsWith("BB3")) return '#FF3300';
+        else if (text.startsWith("BSBi")) return '#336699';
+        else if (text.startsWith("BSB")) return '#00CCFF';
+        else if (text.startsWith("BSWi")) return '#990099';
+        else if (text.startsWith("BSW")) return '#CC66FF';
+        else if (text.startsWith("BSL")) return '#0000CC';
+        else if (text.includes("FEEL NOW G")) return '#B08A3A';
+        else if (text.includes("FEEL NOW S")) return '#666666';
+        else if (text.includes("FEEL NOW B")) return '#00121C';
+        else if (text.includes("FEEL HIGH")) return 'white';
+        else if (text.includes("FEEL DEEP")) return 'white';
+        else if (text.includes("BTM")) return '#00121C';
+        else if (text.includes("FREE")) return '#00121C';
+        else if (text.startsWith("FEEL NOW")) return '#00121C'; 
+        else if (text.includes("FEEL")) return '#00121C';
+        else if (text.includes("SP")) return '#00121C';
+        else if (text === "BEERCYCLE") return '#7A3202';
+        else if (text === "SKRILLEX") return 'white';
+        return 'rgba(34, 34, 34, 0.9)'; 
+    }
+
+    function getTextColor(text) {
+        if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || text.startsWith("BSB") || text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") return 'black';
+        else if (text.startsWith("BSBi")) return '#DEFF66';
+        else if (text.startsWith("BSWi")) return '#FFEF7F';
+        else if (text.includes("BTM")) return '#BD3EA4';
+        else if (text.includes("FREE")) return '#D61C1C';
+        else if (text.startsWith("FEEL NOW")) return 'white';
+        else if (text.includes("FEEL")) return '#0761F1';
+        return 'white'; 
     }
   </script>
 </body>
