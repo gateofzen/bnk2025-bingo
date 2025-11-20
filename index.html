@@ -178,7 +178,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 28.0 (Sync Fix)</div>
+  <div class="version-tag">Ver 29.0 (Count & Color)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -230,6 +230,7 @@
       measurementId: "G-2LVWF4GVS5"
     };
     
+    // candidatesリスト (省略なし)
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -273,10 +274,6 @@
     let editingIndex = -1;
     let currentGenre = "BB1";
     let gameStarted = false; 
-    let sessionId = null;
-    
-    // ★保存先のパスを定数化して絶対に一致させる
-    const PARTICIPANTS_PATH = 'game_participants_2025';
 
     window.onload = function() {
       initGrid();
@@ -304,7 +301,7 @@
             }
           });
         }
-      } catch (err) { console.log("Wake Lock error"); }
+      } catch (err) { console.log(err); }
     }
 
     function startGame() {
@@ -317,21 +314,8 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ★セッション管理（リロードしても同じ人として扱う）
-      sessionId = sessionStorage.getItem('bingo_session_v28');
-      let playerRef;
-      
-      if (sessionId) {
-          playerRef = db.ref(PARTICIPANTS_PATH + '/' + sessionId);
-      } else {
-          // 新規発行 (push)
-          playerRef = db.ref(PARTICIPANTS_PATH).push();
-          sessionId = playerRef.key;
-          sessionStorage.setItem('bingo_session_v28', sessionId);
-      }
-
-      // 名前登録（更新）
-      playerRef.set({
+      // ★重要: ホスト側と同じパス (bingo_participants_v29) に送信
+      db.ref('bingo_participants_v29').push({
         name: playerName,
         timestamp: Date.now()
       });
@@ -373,7 +357,6 @@
 
     function exitAndClear() {
       if(!confirm("ゲームから退出しますか？")) return;
-      sessionStorage.removeItem('bingo_session_v28');
       window.location.search = 't=' + Date.now();
     }
 
@@ -502,7 +485,7 @@
       
       if(currentBingo) {
         isBingo = true;
-        db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
+        db.ref('winners').push({ name: playerName, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
       }
@@ -533,6 +516,7 @@
     }
 
     function getTextColor(text) {
+        // ★修正: BSBiは #DEFF66
         if (text.startsWith("BSBi")) return '#DEFF66';
 
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
