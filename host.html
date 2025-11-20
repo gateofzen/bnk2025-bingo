@@ -145,7 +145,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 31.0 (Close Button Fix)</div>
+  <div class="version-tag">Ver 31.0 (Host & Player Sync)</div>
 
   <button id="resetButton" onclick="resetGame()">RESET</button>
   <div id="playerCounter" onclick="showPlayerList()">PLAYERS: 0</div>
@@ -186,6 +186,7 @@
     };
 
     const candidates = [
+        // (省略) index.htmlと同じ
         "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
         "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
         "BB1 Hous 1", "BB1 Hous 2", "BB1 Hous 3", "BB1 Hous 4", "BB1 Hous 5", "BB1 NOW 1", "BB1 NOW 2", "BB1 Queen", "BB1 TSFT",
@@ -241,7 +242,7 @@
     let playersData = []; 
     let winnersData = []; 
     
-    const PARTICIPANTS_PATH = 'bingo_participants_v29'; // Ver29と同じパスを使う
+    const PARTICIPANTS_PATH = 'bingo_v31_entries'; // ★Playerと一致させる
 
     window.onload = function() {
       db.ref('gameState/history').once('value').then(snapshot => {
@@ -266,19 +267,27 @@
         }
       });
 
+      // ★参加者監視（名前でユニーク化）
       db.ref(PARTICIPANTS_PATH).on('value', snap => {
         playersData = [];
-        snap.forEach(child => playersData.push(child.val()));
+        snap.forEach(child => {
+            const val = child.val();
+            if(val) playersData.push(val);
+        });
         updateCounter();
       });
 
+      // ★勝者監視（名前でユニーク化）
       db.ref('winners').on('value', snap => {
         winnersData = [];
-        snap.forEach(child => winnersData.push(child.val()));
-        winnersData.sort((a, b) => a.timestamp - b.timestamp);
+        snap.forEach(child => {
+            const val = child.val();
+            if(val) winnersData.push(val);
+        });
         updateCounter();
       });
 
+      // 勝者ポップアップ
       db.ref('winners').on('child_added', (snapshot) => {
         const winner = snapshot.val();
         if (winner.timestamp > Date.now() - 10000) {
@@ -288,7 +297,6 @@
     };
 
     function updateCounter() {
-      // 名前ベースでユニークカウント
       const uniquePlayers = new Set(playersData.map(p => p.name));
       const uniqueWinners = new Set(winnersData.map(w => w.name));
       
@@ -301,12 +309,12 @@
       playerCounter.textContent = `PLAYERS: ${count}`;
     }
 
+    // リスト表示
     function showPlayerList() {
       const listContainer = document.getElementById('playerListContent');
       listContainer.innerHTML = "";
       listContainer.className = ""; 
       
-      // 名前ベースで集計
       const uniquePlayers = new Set(playersData.map(p => p.name));
       const total = uniquePlayers.size;
       
@@ -323,15 +331,24 @@
       if(total === 0) {
         listContainer.innerHTML = "<div style='color:#999; grid-column: 1 / -1;'>参加者はまだいません</div>";
       } else {
+        // 勝者名マップ
         const winnerRankMap = {};
         winnersData.forEach((w, index) => {
            winnerRankMap[w.name] = index + 1;
         });
 
         let displayList = [];
-        winnersData.forEach((w, index) => {
-           displayList.push({ name: w.name, rank: index + 1, isWinner: true });
+        // 1. 勝者
+        // 同じ名前の勝者が複数回登録されている可能性があるのでユニーク化して処理
+        const addedWinners = new Set();
+        winnersData.forEach((w) => {
+           if(!addedWinners.has(w.name)) {
+               addedWinners.add(w.name);
+               displayList.push({ name: w.name, rank: addedWinners.size, isWinner: true });
+           }
         });
+
+        // 2. まだの人
         uniquePlayers.forEach(name => {
            if(!winnerRankMap[name]) {
              displayList.push({ name: name, rank: null, isWinner: false });
@@ -352,6 +369,30 @@
         });
       }
       document.getElementById('playerListModal').style.display = 'flex';
+    }
+
+    // ... (省略：その他の関数は前と同じ) ...
+
+    function resetGame() {
+      if(!confirm("ゲームをリセットしますか？\n（参加者リストも全て消去されます）")) return;
+      db.ref('gameState').remove();
+      db.ref('winners').remove();
+      // ★修正: participants_v31_entries を削除
+      db.ref(PARTICIPANTS_PATH).remove();
+      qrElement.style.display = 'block';
+      location.reload();
+    }
+
+    // ... (省略：addWinnerPopup, draw, etc) ...
+
+    function addWinnerPopup(name) {
+      const container = document.getElementById('winnerListContainer');
+      const modal = document.getElementById('winnerModal');
+      const div = document.createElement('div');
+      div.className = 'winner-name-item';
+      div.textContent = name;
+      container.appendChild(div);
+      modal.style.display = 'flex';
     }
 
     function getGenre(text) {
@@ -443,25 +484,6 @@
       list.prepend(li);
       if (history.length > 5) history.pop();
       if (list.children.length > 5) list.removeChild(list.lastChild);
-    }
-
-    function resetGame() {
-      if(!confirm("ゲームをリセットしますか？\n（参加者リストも全て消去されます）")) return;
-      db.ref('gameState').remove();
-      db.ref('winners').remove();
-      db.ref(PARTICIPANTS_PATH).remove();
-      qrElement.style.display = 'block';
-      location.reload();
-    }
-
-    function addWinnerPopup(name) {
-      const container = document.getElementById('winnerListContainer');
-      const modal = document.getElementById('winnerModal');
-      const div = document.createElement('div');
-      div.className = 'winner-name-item';
-      div.textContent = name;
-      container.appendChild(div);
-      modal.style.display = 'flex';
     }
 
     resultElement.addEventListener('click', performDraw);
