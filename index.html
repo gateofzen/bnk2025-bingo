@@ -62,7 +62,9 @@
       grid-template-columns: repeat(3, 1fr); 
       grid-template-rows: repeat(3, 1fr);
       gap: 8px;
-      width: 92vw; max-width: 400px; aspect-ratio: 1 / 1;
+      width: 92vw; 
+      max-width: 400px; 
+      aspect-ratio: 1 / 1;
       margin: 10px auto 100px auto;
     }
 
@@ -70,11 +72,20 @@
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
       border-radius: 12px;
-      width: 100%; height: 100%;
-      display: flex; justify-content: center; align-items: center;     
-      font-size: 0.85rem; font-weight: bold; line-height: 1.1;
-      text-align: center; word-break: break-word; padding: 2px; 
-      cursor: pointer; user-select: none; position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;     
+      font-size: 0.85rem; 
+      font-weight: bold; 
+      line-height: 1.1;
+      text-align: center; 
+      word-break: break-word; 
+      padding: 2px; 
+      cursor: pointer; 
+      user-select: none; 
+      position: relative;
       transition: opacity 0.3s ease;
     }
     .bingo-cell.hit { 
@@ -89,10 +100,18 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) rotate(-15deg);
-      font-size: 2.5rem; color: rgba(255,0,0,0.8); font-weight: 900;
-      text-shadow: 2px 2px 0 rgba(255,255,255,0.4), -1px -1px 0 rgba(255,255,255,0.4);
-      border: 3px solid rgba(255,0,0,0.8); padding: 2px 8px; border-radius: 8px;
-      background-color: rgba(255, 255, 255, 0.3);
+      font-size: 2.5rem; 
+      font-weight: 900;
+      color: rgba(255, 0, 0, 0.8); 
+      text-shadow: 
+        2px 2px 0 rgba(255,255,255,0.4), 
+        -1px -1px 0 rgba(255,255,255,0.4), 
+        1px -1px 0 rgba(255,255,255,0.4), 
+        -1px 1px 0 rgba(255,255,255,0.4), 
+        1px 1px 0 rgba(255,255,255,0.4);
+      border: 3px solid rgba(255, 0, 0, 0.8); 
+      padding: 2px 8px; border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.3); 
       pointer-events: none; white-space: nowrap; font-family: sans-serif;
       box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
       animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -177,7 +196,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 37.0 (Exit Sync)</div>
+  <div class="version-tag">Ver 38.0 (+BSW MRN5)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -257,7 +276,7 @@
       "BSL Comp 1", "BSL Deep 1", "BSL Deep 2", "BSL Deep 3", "BSL Deep 4", "BSL Hit 1", "BSL Hit 2", "BSL Hit 3", "BSL Hit 4", "BSL Hit 5", "BSL Hit 6", "BSL Hit 7", "BSL Hit 8",
       "BSL Hous 1", "BSL Hous 2", "BSL R&B 1", "BSL Rock 1",
       "BSW 10s 1", "BSW Comp 1", "BSW Comp 2", "BSW Comp 3", "BSW Hit 1", "BSW Hit 2", "BSW Hit 3", "BSW Hit 4", "BSW Hit 5", "BSW Hit 6", "BSW Hit 7", "BSW Hit 8",
-      "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
+      "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW MRN5", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
       "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
     ];
 
@@ -273,15 +292,12 @@
     let gameStarted = false; 
     let sessionId = null;
     
-    // ★Ver 37.0: 共通パス
-    const PARTICIPANTS_PATH = 'bingo_game_v37';
+    const PARTICIPANTS_PATH = 'bingo_game_v38';
     
-    // バージョンキー（保存データ管理用）
-    const STORAGE_KEY_ID = 'bingo_user_id_v37';
-    const STORAGE_KEY_NAME = 'bingo_player_name_v37';
-    const STORAGE_KEY_CARD = 'bingo_player_card_v37';
+    const STORAGE_KEY_ID = 'bingo_user_id_v38';
+    const STORAGE_KEY_NAME = 'bingo_player_name_v38';
+    const STORAGE_KEY_CARD = 'bingo_player_card_v38';
 
-    // ID生成
     function getDeviceId() {
       let id = localStorage.getItem(STORAGE_KEY_ID);
       if (!id) {
@@ -294,22 +310,19 @@
     window.onload = function() {
       initGrid();
       
-      // 保存データ復元
       const savedName = localStorage.getItem(STORAGE_KEY_NAME);
       const savedCard = localStorage.getItem(STORAGE_KEY_CARD);
 
       if (savedName && savedCard) {
           playerName = savedName;
           myCard = JSON.parse(savedCard);
-          sessionId = getDeviceId(); // IDも復元
+          sessionId = getDeviceId();
           
           document.getElementById('playerName').value = playerName;
-          // データがある場合は自動ログイン的に開始
           startGame(true); 
           renderGrid();
       }
 
-      // Wake Lock
       document.addEventListener('click', async () => {
         try {
           if ('wakeLock' in navigator) {
@@ -353,21 +366,17 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ID取得と登録
       sessionId = getDeviceId();
       
-      // ★復元でなければ保存
       if (!isRestore) {
         localStorage.setItem(STORAGE_KEY_NAME, playerName);
       }
 
-      // ★常にDBへ登録・更新（名前変更や生存確認のため）
       db.ref(PARTICIPANTS_PATH + '/' + sessionId).set({
         name: playerName,
         timestamp: Date.now()
       });
 
-      // 履歴監視
       db.ref('gameState/history').on('value', (snapshot) => {
         if(isBingo) return;
 
@@ -393,7 +402,6 @@
         renderGrid();
       });
 
-      // 自分のビンゴ状態チェック（復帰時用）
       db.ref('winners').once('value', snap => {
          const val = snap.val();
          if(val) {
@@ -412,15 +420,12 @@
         localStorage.setItem(STORAGE_KEY_CARD, JSON.stringify(myCard));
     }
 
-    // ★修正: 退出時にDBからも削除する
     function exitAndClear() {
       if(!confirm("ビンゴカードを破棄して退出しますか？\n（データは完全に消去されます）")) return;
       
-      // DBから削除
       const uid = getDeviceId();
       db.ref(PARTICIPANTS_PATH + '/' + uid).remove();
 
-      // ローカル削除
       localStorage.removeItem(STORAGE_KEY_NAME);
       localStorage.removeItem(STORAGE_KEY_CARD);
       localStorage.removeItem(STORAGE_KEY_ID);
@@ -555,9 +560,7 @@
       
       if(currentBingo) {
         isBingo = true;
-        const uid = getDeviceId();
-        db.ref('winners').push({ name: playerName, id: uid, timestamp: Date.now() });
-        // ★送信ストップ
+        db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
       }
@@ -591,7 +594,7 @@
         if (text.startsWith("BSBi")) return '#DEFF66';
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
             (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
-            text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
+            text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") return 'black';
         else if (text.startsWith("BSWi")) return '#FFEF7F';
         else if (text.includes("BTM")) return '#BD3EA4';
         else if (text.includes("FREE")) return '#D61C1C';
