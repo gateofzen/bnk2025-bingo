@@ -149,7 +149,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 40.1 (Final Fixed)</div>
+  <div class="version-tag">Ver 41.0 (Complete List)</div>
 
   <button id="resetButton" onclick="resetGame()">RESET</button>
   <div id="playerCounter" onclick="showPlayerList()">PLAYERS: 0</div>
@@ -191,7 +191,7 @@
       measurementId: "G-2LVWF4GVS5"
     };
 
-    // ★修正: 完全な候補リスト
+    // ★修正: 正しいリストを記述
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -221,9 +221,8 @@
       "BSL Comp 1", "BSL Deep 1", "BSL Deep 2", "BSL Deep 3", "BSL Deep 4", "BSL Hit 1", "BSL Hit 2", "BSL Hit 3", "BSL Hit 4", "BSL Hit 5", "BSL Hit 6", "BSL Hit 7", "BSL Hit 8",
       "BSL Hous 1", "BSL Hous 2", "BSL R&B 1", "BSL Rock 1",
       "BSW 10s 1", "BSW Comp 1", "BSW Comp 2", "BSW Comp 3", "BSW Hit 1", "BSW Hit 2", "BSW Hit 3", "BSW Hit 4", "BSW Hit 5", "BSW Hit 6", "BSW Hit 7", "BSW Hit 8",
-      "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW MRN5", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
-      "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1",
-      "ITS 1", "ITS 2", "ITS 3", "ZEDD MIX"
+      "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
+      "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
     ];
 
     function hideModal(id) {
@@ -251,7 +250,6 @@
     let playersData = []; 
     let winnersData = []; 
     
-    // ★Ver 40.1: パスを更新
     const PARTICIPANTS_PATH = 'bingo_game_v41';
     let initialWinnerKeys = new Set();
 
@@ -318,7 +316,6 @@
       });
     };
 
-    // テストモード
     function runTestMode() {
         if(!confirm("テストモードを開始しますか？")) return;
         let count = 0;
@@ -407,7 +404,6 @@
     }
 
     resultElement.addEventListener('click', performDraw);
-    // ★QRコードのクリックイベントも確実に追加
     qrElement.addEventListener('click', performDraw);
 
     function getGenre(text) {
