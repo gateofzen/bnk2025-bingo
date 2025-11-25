@@ -17,12 +17,7 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    /* ★修正: 更新防止・スクロール制御の強化 */
-    html, body {
-      height: 100%;
-      overflow: hidden; /* 全体のスクロールを禁止 */
-      overscroll-behavior-y: none; /* プルダウン更新を禁止 */
-    }
+    html, body { height: 100%; overflow: hidden; overscroll-behavior-y: none; }
 
     body { 
       background-color: black; 
@@ -33,14 +28,7 @@
       background-size: cover;
       color: white; 
       font-family: 'BrotherXL', sans-serif;
-      touch-action: none; /* ピンチズームなども禁止 */
-    }
-
-    /* スクロールが必要な部分だけ許可 */
-    .scrollable-area {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      height: 100%;
+      touch-action: none; 
     }
 
     .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
@@ -65,8 +53,8 @@
     }
 
     .container { 
-      max-width: 500px; margin: 0 auto; text-align: center; padding-top: 20px; 
-      height: 100%; overflow-y: auto; /* 中身だけスクロール許可 */
+      width: 100%; max-width: 500px; margin: 0 auto; text-align: center; padding-top: 10px;
+      height: 100%; overflow-y: auto; 
     }
     
     .bingo-grid {
@@ -74,30 +62,19 @@
       grid-template-columns: repeat(3, 1fr); 
       grid-template-rows: repeat(3, 1fr);
       gap: 8px;
-      width: 92vw; 
-      max-width: 400px; 
-      aspect-ratio: 1 / 1;
-      margin: 10px auto 100px auto; /* 下に余白 */
+      width: 92vw; max-width: 400px; aspect-ratio: 1 / 1;
+      margin: 10px auto 100px auto;
     }
 
     .bingo-cell {
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
       border-radius: 12px;
-      width: 100%;
-      height: 100%;
-      display: flex; 
-      justify-content: center; 
-      align-items: center;     
-      font-size: 0.85rem; 
-      font-weight: bold; 
-      line-height: 1.1;
-      text-align: center; 
-      word-break: break-word; 
-      padding: 2px; 
-      cursor: pointer; 
-      user-select: none; 
-      position: relative;
+      width: 100%; height: 100%;
+      display: flex; justify-content: center; align-items: center;     
+      font-size: 0.85rem; font-weight: bold; line-height: 1.1;
+      text-align: center; word-break: break-word; padding: 2px; 
+      cursor: pointer; user-select: none; position: relative;
       transition: opacity 0.3s ease;
     }
     .bingo-cell.hit { 
@@ -135,8 +112,8 @@
     .btn-random.disabled { opacity: 0.5; cursor: not-allowed; }
 
     #status {
-      color: #FFFF00; font-size: 1.2rem; margin: 15px 0; 
-      min-height: 40px; font-weight: bold;
+      color: #FFFF00; font-size: 1.2rem; margin: 10px 0; 
+      min-height: 30px; font-weight: bold;
       display: flex; justify-content: center; align-items: center;
     }
     .status-badge {
@@ -185,14 +162,6 @@
     @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     
-    .close-bingo-btn {
-      padding: 10px 30px; font-size: 1.2rem; margin-top: 30px;
-      background: transparent; border: 2px solid white;
-      color: white; cursor: pointer; border-radius: 30px;
-      font-family: 'BrotherXL', sans-serif;
-    }
-
-    /* フッターメニュー (ボタン1つに統合) */
     .footer-menu {
       position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
       background: rgba(0,0,0,0.8); border-top: 1px solid #333;
@@ -208,7 +177,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 36.0 (Persistent)</div>
+  <div class="version-tag">Ver 37.0 (Exit Sync)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -235,7 +204,7 @@
   <div id="myBingoModal" class="bingo-overlay">
     <div class="bingo-text">BINGO!!!</div>
     <div style="font-size: 1.5rem; margin-top: 20px;">CONGRATULATIONS!</div>
-    <button class="close-bingo-btn" onclick="closeModal('myBingoModal')">CLOSE</button>
+    <div style="font-size: 1rem; margin-top: 40px; color: #aaa;">Please wait...</div>
   </div>
 
   <div id="selectorModal" class="modal">
@@ -304,25 +273,39 @@
     let gameStarted = false; 
     let sessionId = null;
     
-    const PARTICIPANTS_PATH = 'bingo_v34_final';
+    // ★Ver 37.0: 共通パス
+    const PARTICIPANTS_PATH = 'bingo_game_v37';
+    
+    // バージョンキー（保存データ管理用）
+    const STORAGE_KEY_ID = 'bingo_user_id_v37';
+    const STORAGE_KEY_NAME = 'bingo_player_name_v37';
+    const STORAGE_KEY_CARD = 'bingo_player_card_v37';
 
-    // ★起動時の処理：保存データがあれば復元
+    // ID生成
+    function getDeviceId() {
+      let id = localStorage.getItem(STORAGE_KEY_ID);
+      if (!id) {
+        id = 'u_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+        localStorage.setItem(STORAGE_KEY_ID, id);
+      }
+      return id;
+    }
+
     window.onload = function() {
       initGrid();
       
-      // 保存されたデータをチェック
-      const savedName = localStorage.getItem('bingo_v36_name');
-      const savedCard = localStorage.getItem('bingo_v36_card');
-      const savedId = localStorage.getItem('bingo_v36_id');
+      // 保存データ復元
+      const savedName = localStorage.getItem(STORAGE_KEY_NAME);
+      const savedCard = localStorage.getItem(STORAGE_KEY_CARD);
 
-      if (savedName && savedCard && savedId) {
-          // データがあれば復元してゲーム画面へ
+      if (savedName && savedCard) {
           playerName = savedName;
           myCard = JSON.parse(savedCard);
-          sessionId = savedId;
+          sessionId = getDeviceId(); // IDも復元
           
           document.getElementById('playerName').value = playerName;
-          startGame(true); // true = 復元モード
+          // データがある場合は自動ログイン的に開始
+          startGame(true); 
           renderGrid();
       }
 
@@ -370,22 +353,19 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('gameScreen').style.display = 'block';
 
-      // ID管理と保存
+      // ID取得と登録
+      sessionId = getDeviceId();
+      
+      // ★復元でなければ保存
       if (!isRestore) {
-         // 新規参加時のみID生成・保存
-         const newRef = db.ref(PARTICIPANTS_PATH).push();
-         sessionId = newRef.key;
-         
-         // DB登録
-         db.ref(PARTICIPANTS_PATH + '/' + sessionId).set({
-           name: playerName,
-           timestamp: Date.now()
-         });
-         
-         // ローカル保存
-         localStorage.setItem('bingo_v36_name', playerName);
-         localStorage.setItem('bingo_v36_id', sessionId);
+        localStorage.setItem(STORAGE_KEY_NAME, playerName);
       }
+
+      // ★常にDBへ登録・更新（名前変更や生存確認のため）
+      db.ref(PARTICIPANTS_PATH + '/' + sessionId).set({
+        name: playerName,
+        timestamp: Date.now()
+      });
 
       // 履歴監視
       db.ref('gameState/history').on('value', (snapshot) => {
@@ -413,21 +393,37 @@
         renderGrid();
       });
 
+      // 自分のビンゴ状態チェック（復帰時用）
+      db.ref('winners').once('value', snap => {
+         const val = snap.val();
+         if(val) {
+            const arr = Object.values(val);
+            if(arr.some(w => w.id === sessionId)) {
+                isBingo = true;
+                document.getElementById('myBingoModal').style.display = 'flex';
+            }
+         }
+      });
+
       requestWakeLock();
     }
 
-    // ★カード内容保存
     function saveCard() {
-        localStorage.setItem('bingo_v36_card', JSON.stringify(myCard));
+        localStorage.setItem(STORAGE_KEY_CARD, JSON.stringify(myCard));
     }
 
+    // ★修正: 退出時にDBからも削除する
     function exitAndClear() {
       if(!confirm("ビンゴカードを破棄して退出しますか？\n（データは完全に消去されます）")) return;
       
-      // 全データ削除
-      localStorage.removeItem('bingo_v36_name');
-      localStorage.removeItem('bingo_v36_card');
-      localStorage.removeItem('bingo_v36_id');
+      // DBから削除
+      const uid = getDeviceId();
+      db.ref(PARTICIPANTS_PATH + '/' + uid).remove();
+
+      // ローカル削除
+      localStorage.removeItem(STORAGE_KEY_NAME);
+      localStorage.removeItem(STORAGE_KEY_CARD);
+      localStorage.removeItem(STORAGE_KEY_ID);
       
       window.location.search = 't=' + Date.now();
     }
@@ -440,7 +436,7 @@
         [pool[i], pool[j]] = [pool[j], pool[i]];
       }
       myCard = pool.slice(0, 9);
-      saveCard(); // 保存
+      saveCard();
       renderGrid();
     }
 
@@ -507,7 +503,7 @@
         } else {
           div.onclick = function() {
             myCard[editingIndex] = prog;
-            saveCard(); // 保存
+            saveCard();
             closeModal('selectorModal');
             renderGrid();
           };
@@ -559,7 +555,9 @@
       
       if(currentBingo) {
         isBingo = true;
-        db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
+        const uid = getDeviceId();
+        db.ref('winners').push({ name: playerName, id: uid, timestamp: Date.now() });
+        // ★送信ストップ
         document.getElementById('myBingoModal').style.display = 'flex';
         db.ref('gameState/history').off();
       }
