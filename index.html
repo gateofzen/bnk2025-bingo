@@ -162,6 +162,13 @@
     @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     
+    .close-bingo-btn {
+      padding: 10px 30px; font-size: 1.2rem; margin-top: 30px;
+      background: transparent; border: 2px solid white;
+      color: white; cursor: pointer; border-radius: 30px;
+      font-family: 'BrotherXL', sans-serif;
+    }
+
     .footer-menu {
       position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
       background: rgba(0,0,0,0.8); border-top: 1px solid #333;
@@ -177,7 +184,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 39.0 (Sync & Clear Fix)</div>
+  <div class="version-tag">Ver 40.0 (Close Btn Added)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -205,6 +212,7 @@
     <div class="bingo-text">BINGO!!!</div>
     <div style="font-size: 1.5rem; margin-top: 20px;">CONGRATULATIONS!</div>
     <div style="font-size: 1rem; margin-top: 40px; color: #aaa;">Please wait...</div>
+    <button class="close-bingo-btn" onclick="closeModal('myBingoModal')">CLOSE</button>
   </div>
 
   <div id="selectorModal" class="modal">
@@ -273,7 +281,6 @@
     let gameStarted = false; 
     let sessionId = null;
     
-    // ★Ver 39.0: 新しいパス
     const PARTICIPANTS_PATH = 'bingo_game_v39';
     
     const STORAGE_KEY_ID = 'bingo_user_id_v39';
@@ -360,7 +367,8 @@
       });
 
       db.ref('gameState/history').on('value', (snapshot) => {
-        if(isBingo) return;
+        // ★ビンゴ達成後も履歴更新を受け取る（画面確認のため）
+        // if(isBingo) return; // コメントアウト
 
         drawnHistory = snapshot.val() || [];
         const statusEl = document.getElementById('status');
@@ -402,26 +410,17 @@
         localStorage.setItem(STORAGE_KEY_CARD, JSON.stringify(myCard));
     }
 
-    // ★修正: 削除が完了してからリロード
     function exitAndClear() {
       if(!confirm("ビンゴカードを破棄して退出しますか？\n（データは完全に消去されます）")) return;
       
       const uid = getDeviceId();
-      db.ref(PARTICIPANTS_PATH + '/' + uid).remove()
-        .then(() => {
-           finalizeExit();
-        })
-        .catch((err) => {
-           // エラーでも強制退出
-           finalizeExit();
-        });
-    }
-    
-    function finalizeExit() {
-        localStorage.removeItem(STORAGE_KEY_NAME);
-        localStorage.removeItem(STORAGE_KEY_CARD);
-        localStorage.removeItem(STORAGE_KEY_ID);
-        window.location.search = 't=' + Date.now();
+      db.ref(PARTICIPANTS_PATH + '/' + uid).remove();
+
+      localStorage.removeItem(STORAGE_KEY_NAME);
+      localStorage.removeItem(STORAGE_KEY_CARD);
+      localStorage.removeItem(STORAGE_KEY_ID);
+      
+      window.location.search = 't=' + Date.now();
     }
 
     function randomFill() {
@@ -541,7 +540,7 @@
     }
 
     function checkBingo(hits) {
-      if(isBingo) return;
+      if(isBingo) return; // 既にビンゴなら再送信しない
 
       const lines = [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]];
       let currentBingo = false;
@@ -553,7 +552,8 @@
         isBingo = true;
         db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
-        db.ref('gameState/history').off();
+        // ★修正: ビンゴ後も同期は続ける（画面確認のため）
+        // db.ref('gameState/history').off(); 
       }
     }
 
