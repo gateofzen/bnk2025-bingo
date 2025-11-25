@@ -17,8 +17,6 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    html, body { height: 100%; overflow: hidden; overscroll-behavior-y: none; }
-
     body { 
       background-color: black; 
       background-image: url('./FC_logo.png');
@@ -28,7 +26,9 @@
       background-size: cover;
       color: white; 
       font-family: 'BrotherXL', sans-serif;
-      touch-action: none; 
+      min-height: 100vh; margin: 0; padding-bottom: 80px;
+      touch-action: manipulation;
+      overscroll-behavior-y: none;
     }
 
     .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
@@ -52,10 +52,7 @@
       font-family: 'BrotherXL', sans-serif;
     }
 
-    .container { 
-      width: 100%; max-width: 500px; margin: 0 auto; text-align: center; padding-top: 10px;
-      height: 100%; overflow-y: auto; 
-    }
+    .container { max-width: 500px; margin: 0 auto; text-align: center; padding-top: 20px; }
     
     .bingo-grid {
       display: grid; 
@@ -65,7 +62,7 @@
       width: 92vw; 
       max-width: 400px; 
       aspect-ratio: 1 / 1;
-      margin: 10px auto 100px auto;
+      margin: 10px auto 20px auto;
     }
 
     .bingo-cell {
@@ -131,8 +128,8 @@
     .btn-random.disabled { opacity: 0.5; cursor: not-allowed; }
 
     #status {
-      color: #FFFF00; font-size: 1.2rem; margin: 10px 0; 
-      min-height: 30px; font-weight: bold;
+      color: #FFFF00; font-size: 1.2rem; margin: 15px 0; 
+      min-height: 40px; font-weight: bold;
       display: flex; justify-content: center; align-items: center;
     }
     .status-badge {
@@ -154,8 +151,16 @@
     }
     
     .genre-tabs { display: flex; overflow-x: auto; background: transparent; padding: 15px 10px; white-space: nowrap; }
-    .genre-tab { display: inline-block; padding: 8px 18px; margin-right: 8px; background: #222; border-radius: 20px; color: #888; font-size: 0.9rem; border: 1px solid #333; cursor: pointer; }
-    .genre-tab.active { background: #eee; color: #000; font-weight: bold; border-color: #fff; }
+    
+    /* ★修正: タブボタンのデザイン調整 */
+    .genre-tab { 
+      display: inline-block; padding: 8px 18px; margin-right: 8px; 
+      border-radius: 20px; font-size: 0.9rem; border: 1px solid #333; 
+      cursor: pointer; color: #aaa; background: #222;
+      transition: all 0.2s;
+    }
+    /* アクティブ時はボーダーを白くして強調 */
+    .genre-tab.active { border-color: white; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
     
     .list-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
     .list-item { padding: 15px; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center; }
@@ -181,22 +186,31 @@
     @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     
+    .close-bingo-btn {
+      padding: 10px 30px; font-size: 1.2rem; margin-top: 30px;
+      background: transparent; border: 2px solid white;
+      color: white; cursor: pointer; border-radius: 30px;
+      font-family: 'BrotherXL', sans-serif;
+    }
+
     .footer-menu {
       position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
       background: rgba(0,0,0,0.8); border-top: 1px solid #333;
-      display: flex; justify-content: center; align-items: center;
+      display: flex; justify-content: center; align-items: center; gap: 20px;
       z-index: 1500;
     }
     .footer-btn {
-      background: transparent; border: 1px solid #662222; color: #cc6666;
-      padding: 8px 25px; border-radius: 20px; font-size: 0.8rem;
+      background: transparent; border: 1px solid #555; color: #aaa;
+      padding: 5px 15px; border-radius: 20px; font-size: 0.7rem;
       cursor: pointer; font-family: sans-serif;
     }
-    .footer-btn:hover { background: #331111; color: red; }
+    .footer-btn:hover { background: #333; color: white; }
+    .btn-exit { border-color: #662222; color: #cc6666; }
+    .btn-exit:hover { background: #331111; color: red; }
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 38.0 (+BSW MRN5)</div>
+  <div class="version-tag">Ver 39.0 (Tabs Colored)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -217,7 +231,8 @@
   </div>
 
   <div class="footer-menu">
-    <button class="footer-btn" onclick="exitAndClear()">⚠ RESET CARD & EXIT</button>
+    <button class="footer-btn" onclick="manualRefresh()">↻ REFRESH</button>
+    <button class="footer-btn btn-exit" onclick="exitAndClear()">⚠ EXIT & CLEAR</button>
   </div>
 
   <div id="myBingoModal" class="bingo-overlay">
@@ -246,7 +261,7 @@
       appId: "1:127094139624:web:703cf76da95ba05154b75d",
       measurementId: "G-2LVWF4GVS5"
     };
-    
+
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -288,12 +303,12 @@
     let drawnHistory = [];
     let isBingo = false;
     let editingIndex = -1;
-    let currentGenre = "BB1";
+    // ★修正: 初期選択タブをBB2に変更
+    let currentGenre = "BB2";
     let gameStarted = false; 
     let sessionId = null;
     
     const PARTICIPANTS_PATH = 'bingo_game_v38';
-    
     const STORAGE_KEY_ID = 'bingo_user_id_v38';
     const STORAGE_KEY_NAME = 'bingo_player_name_v38';
     const STORAGE_KEY_CARD = 'bingo_player_card_v38';
@@ -317,7 +332,6 @@
           playerName = savedName;
           myCard = JSON.parse(savedCard);
           sessionId = getDeviceId();
-          
           document.getElementById('playerName').value = playerName;
           startGame(true); 
           renderGrid();
@@ -342,19 +356,6 @@
         div.onclick = openSelector.bind(null, i);
         gridEl.appendChild(div);
       }
-    }
-
-    async function requestWakeLock() {
-      try {
-        if ('wakeLock' in navigator) {
-          const wakeLock = await navigator.wakeLock.request('screen');
-          document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-              await navigator.wakeLock.request('screen');
-            }
-          });
-        }
-      } catch (err) { console.log("Wake Lock error"); }
     }
 
     function startGame(isRestore = false) {
@@ -412,8 +413,6 @@
             }
          }
       });
-
-      requestWakeLock();
     }
 
     function saveCard() {
@@ -422,15 +421,19 @@
 
     function exitAndClear() {
       if(!confirm("ビンゴカードを破棄して退出しますか？\n（データは完全に消去されます）")) return;
-      
       const uid = getDeviceId();
       db.ref(PARTICIPANTS_PATH + '/' + uid).remove();
-
       localStorage.removeItem(STORAGE_KEY_NAME);
       localStorage.removeItem(STORAGE_KEY_CARD);
       localStorage.removeItem(STORAGE_KEY_ID);
-      
       window.location.search = 't=' + Date.now();
+    }
+
+    function manualRefresh() {
+      if(gameStarted) {
+         if(!confirm("ビンゴカードが消えてしまう可能性があります。\n再読み込みしますか？")) return;
+      }
+      location.reload();
     }
 
     function randomFill() {
@@ -449,9 +452,10 @@
       if(gameStarted) return; 
       editingIndex = index;
       document.getElementById('selectorModal').style.display = 'flex';
-      currentGenre = "BB1";
+      // ★修正: 初期タブをBB2に
+      currentGenre = "BB2";
       renderTabs();
-      renderList("BB1");
+      renderList("BB2");
     }
 
     function closeModal(id) {
@@ -461,11 +465,40 @@
     function renderTabs() {
       const tabContainer = document.getElementById('genreTabs');
       tabContainer.innerHTML = "";
-      const genres = ["BB1", "BB2", "BB3", "BSW", "BSB", "BSL", "BSWi", "BSBi", "FEEL", "L 24/25", "SP/OTHER"];
+      // ★修正: タブの並び順変更
+      const genres = ["BB2", "BB3", "BB1", "BSW", "BSB", "BSL", "BSWi", "BSBi", "FEEL", "L 24/25", "SP/OTHER"];
+      
+      // タブごとの色設定
+      const tabColors = {
+          "BB1": {bg: "#FFFF00", color: "black"},
+          "BB2": {bg: "#FF9933", color: "black"},
+          "BB3": {bg: "#FF3300", color: "black"},
+          "BSW": {bg: "#CC66FF", color: "white"},
+          "BSB": {bg: "#00CCFF", color: "black"},
+          "BSL": {bg: "#0000CC", color: "white"},
+          "BSWi": {bg: "#990099", color: "#FFEF7F"},
+          "BSBi": {bg: "#336699", color: "#DEFF66"},
+          "FEEL": {bg: "#B08A3A", color: "white"},
+          "L 24/25": {bg: "#00121C", color: "white"},
+          "SP/OTHER": {bg: "white", color: "black"}
+      };
+
       genres.forEach(g => {
         const span = document.createElement('span');
         span.className = 'genre-tab';
-        if(g === currentGenre) span.classList.add('active');
+        if(g === currentGenre) {
+            span.classList.add('active');
+            // アクティブ時は白い枠線
+        }
+        
+        // ★修正: タブに色を適用
+        const style = tabColors[g];
+        if(style) {
+            span.style.backgroundColor = style.bg;
+            span.style.color = style.color;
+            span.style.borderColor = style.color; // 枠線も文字色に合わせる
+        }
+
         span.textContent = g;
         span.onclick = function() {
           currentGenre = g; renderTabs(); renderList(g);
@@ -480,9 +513,12 @@
       listContainer.scrollTop = 0;
       
       const filtered = candidates.filter(prog => {
+        // ★修正: BSW, BSBの厳密なフィルタリング
         if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("SKRILLEX") || prog === "BEERCYCLE";
         if (genre === "L 24/25") return prog.startsWith("L 24") || prog.startsWith("L 25");
         if (genre === "FEEL") return prog.startsWith("FEEL"); 
+        if (genre === "BSW") return prog.startsWith("BSW") && !prog.startsWith("BSWi");
+        if (genre === "BSB") return prog.startsWith("BSB") && !prog.startsWith("BSBi");
         return prog.startsWith(genre);
       });
       
@@ -537,7 +573,7 @@
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
-            cell.style.opacity = "1"; 
+            cell.style.opacity = "1";
           }
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
@@ -594,7 +630,7 @@
         if (text.startsWith("BSBi")) return '#DEFF66';
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
             (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
-            text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") return 'black';
+            text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
         else if (text.startsWith("BSWi")) return '#FFEF7F';
         else if (text.includes("BTM")) return '#BD3EA4';
         else if (text.includes("FREE")) return '#D61C1C';
