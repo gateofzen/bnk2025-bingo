@@ -184,7 +184,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 40.0 (Close Btn Added)</div>
+  <div class="version-tag">Ver 40.1 (Final Fixed)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -266,7 +266,8 @@
       "BSL Hous 1", "BSL Hous 2", "BSL R&B 1", "BSL Rock 1",
       "BSW 10s 1", "BSW Comp 1", "BSW Comp 2", "BSW Comp 3", "BSW Hit 1", "BSW Hit 2", "BSW Hit 3", "BSW Hit 4", "BSW Hit 5", "BSW Hit 6", "BSW Hit 7", "BSW Hit 8",
       "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW MRN5", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
-      "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
+      "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1",
+      "ITS 1", "ITS 2", "ITS 3", "ZEDD MIX"
     ];
 
     firebase.initializeApp(firebaseConfig);
@@ -277,15 +278,15 @@
     let drawnHistory = [];
     let isBingo = false;
     let editingIndex = -1;
-    let currentGenre = "BB1";
+    let currentGenre = "BB2"; // 初期タブをBB2に
     let gameStarted = false; 
     let sessionId = null;
     
-    const PARTICIPANTS_PATH = 'bingo_game_v39';
+    const PARTICIPANTS_PATH = 'bingo_game_v41'; // Ver40.1でパス更新
     
-    const STORAGE_KEY_ID = 'bingo_user_id_v39';
-    const STORAGE_KEY_NAME = 'bingo_player_name_v39';
-    const STORAGE_KEY_CARD = 'bingo_player_card_v39';
+    const STORAGE_KEY_ID = 'bingo_user_id_v41';
+    const STORAGE_KEY_NAME = 'bingo_player_name_v41';
+    const STORAGE_KEY_CARD = 'bingo_player_card_v41';
 
     function getDeviceId() {
       let id = localStorage.getItem(STORAGE_KEY_ID);
@@ -306,7 +307,6 @@
           playerName = savedName;
           myCard = JSON.parse(savedCard);
           sessionId = getDeviceId();
-          
           document.getElementById('playerName').value = playerName;
           startGame(true); 
           renderGrid();
@@ -367,8 +367,7 @@
       });
 
       db.ref('gameState/history').on('value', (snapshot) => {
-        // ★ビンゴ達成後も履歴更新を受け取る（画面確認のため）
-        // if(isBingo) return; // コメントアウト
+        if(isBingo) return;
 
         drawnHistory = snapshot.val() || [];
         const statusEl = document.getElementById('status');
@@ -439,9 +438,9 @@
       if(gameStarted) return; 
       editingIndex = index;
       document.getElementById('selectorModal').style.display = 'flex';
-      currentGenre = "BB1";
+      currentGenre = "BB2"; // 初期タブ
       renderTabs();
-      renderList("BB1");
+      renderList("BB2");
     }
 
     function closeModal(id) {
@@ -451,11 +450,36 @@
     function renderTabs() {
       const tabContainer = document.getElementById('genreTabs');
       tabContainer.innerHTML = "";
-      const genres = ["BB1", "BB2", "BB3", "BSW", "BSB", "BSL", "BSWi", "BSBi", "FEEL", "L 24/25", "SP/OTHER"];
+      const genres = ["BB2", "BB3", "BB1", "BSW", "BSB", "BSL", "BSWi", "BSBi", "FEEL", "L 24/25", "SP/OTHER"];
+      
+      const tabColors = {
+          "BB1": {bg: "#FFFF00", color: "black"},
+          "BB2": {bg: "#FF9933", color: "black"},
+          "BB3": {bg: "#FF3300", color: "black"},
+          "BSW": {bg: "#CC66FF", color: "white"},
+          "BSB": {bg: "#00CCFF", color: "black"},
+          "BSL": {bg: "#0000CC", color: "white"},
+          "BSWi": {bg: "#990099", color: "#FFEF7F"},
+          "BSBi": {bg: "#336699", color: "#DEFF66"},
+          "FEEL": {bg: "#B08A3A", color: "white"},
+          "L 24/25": {bg: "#00121C", color: "white"},
+          "SP/OTHER": {bg: "white", color: "black"}
+      };
+
       genres.forEach(g => {
         const span = document.createElement('span');
         span.className = 'genre-tab';
-        if(g === currentGenre) span.classList.add('active');
+        if(g === currentGenre) {
+            span.classList.add('active');
+        }
+        
+        const style = tabColors[g];
+        if(style) {
+            span.style.backgroundColor = style.bg;
+            span.style.color = style.color;
+            span.style.borderColor = style.color;
+        }
+
         span.textContent = g;
         span.onclick = function() {
           currentGenre = g; renderTabs(); renderList(g);
@@ -470,9 +494,11 @@
       listContainer.scrollTop = 0;
       
       const filtered = candidates.filter(prog => {
-        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("SKRILLEX") || prog === "BEERCYCLE";
+        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("ITS") || prog === "ZEDD MIX" || prog === "SKRILLEX" || prog === "BEERCYCLE";
         if (genre === "L 24/25") return prog.startsWith("L 24") || prog.startsWith("L 25");
         if (genre === "FEEL") return prog.startsWith("FEEL"); 
+        if (genre === "BSW") return prog.startsWith("BSW") && !prog.startsWith("BSWi");
+        if (genre === "BSB") return prog.startsWith("BSB") && !prog.startsWith("BSBi");
         return prog.startsWith(genre);
       });
       
@@ -540,7 +566,7 @@
     }
 
     function checkBingo(hits) {
-      if(isBingo) return; // 既にビンゴなら再送信しない
+      if(isBingo) return;
 
       const lines = [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]];
       let currentBingo = false;
@@ -552,8 +578,7 @@
         isBingo = true;
         db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
-        // ★修正: ビンゴ後も同期は続ける（画面確認のため）
-        // db.ref('gameState/history').off(); 
+        db.ref('gameState/history').off();
       }
     }
 
@@ -577,7 +602,7 @@
         else if (text.includes("FEEL")) return '#00121C';
         else if (text.includes("SP")) return '#00121C';
         else if (text === "BEERCYCLE") return '#7A3202';
-        else if (text === "SKRILLEX") return 'white';
+        else if (text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") { bgColor = 'white'; textColor = 'black'; }
         return 'rgba(34, 34, 34, 0.9)'; 
     }
 
@@ -585,7 +610,7 @@
         if (text.startsWith("BSBi")) return '#DEFF66';
         if (text.startsWith("BB1") || text.startsWith("BB2") || text.startsWith("BB3") || 
             (text.startsWith("BSB") && !text.startsWith("BSBi")) || 
-            text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX") return 'black';
+            text.startsWith("FEEL HIGH") || text.includes("FEEL DEEP") || text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") return 'black';
         else if (text.startsWith("BSWi")) return '#FFEF7F';
         else if (text.includes("BTM")) return '#BD3EA4';
         else if (text.includes("FREE")) return '#D61C1C';
