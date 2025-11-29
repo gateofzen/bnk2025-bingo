@@ -62,7 +62,9 @@
       grid-template-columns: repeat(3, 1fr); 
       grid-template-rows: repeat(3, 1fr);
       gap: 8px;
-      width: 92vw; max-width: 400px; aspect-ratio: 1 / 1;
+      width: 92vw; 
+      max-width: 400px; 
+      aspect-ratio: 1 / 1;
       margin: 10px auto 100px auto;
     }
 
@@ -70,11 +72,20 @@
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
       border-radius: 12px;
-      width: 100%; height: 100%;
-      display: flex; justify-content: center; align-items: center;     
-      font-size: 0.85rem; font-weight: bold; line-height: 1.1;
-      text-align: center; word-break: break-word; padding: 2px; 
-      cursor: pointer; user-select: none; position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;     
+      font-size: 0.85rem; 
+      font-weight: bold; 
+      line-height: 1.1;
+      text-align: center; 
+      word-break: break-word; 
+      padding: 2px; 
+      cursor: pointer; 
+      user-select: none; 
+      position: relative;
       transition: opacity 0.3s ease;
     }
     .bingo-cell.hit { 
@@ -184,7 +195,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 41.0 (ITS Removed)</div>
+  <div class="version-tag">Ver 42.0 (Fresh Start)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -281,10 +292,12 @@
     let gameStarted = false; 
     let sessionId = null;
     
-    const PARTICIPANTS_PATH = 'bingo_game_v41';
-    const STORAGE_KEY_ID = 'bingo_user_id_v41';
-    const STORAGE_KEY_NAME = 'bingo_player_name_v41';
-    const STORAGE_KEY_CARD = 'bingo_player_card_v41';
+    // ★重要: パスを更新
+    const PARTICIPANTS_PATH = 'bingo_game_final_v42';
+    
+    const STORAGE_KEY_ID = 'bingo_user_id_v42';
+    const STORAGE_KEY_NAME = 'bingo_player_name_v42';
+    const STORAGE_KEY_CARD = 'bingo_player_card_v42';
 
     function getDeviceId() {
       let id = localStorage.getItem(STORAGE_KEY_ID);
@@ -492,7 +505,7 @@
       listContainer.scrollTop = 0;
       
       const filtered = candidates.filter(prog => {
-        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("SKRILLEX") || prog === "BEERCYCLE";
+        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("ITS") || prog === "ZEDD MIX" || prog === "SKRILLEX" || prog === "BEERCYCLE";
         if (genre === "L 24/25") return prog.startsWith("L 24") || prog.startsWith("L 25");
         if (genre === "FEEL") return prog.startsWith("FEEL"); 
         if (genre === "BSW") return prog.startsWith("BSW") && !prog.startsWith("BSWi");
