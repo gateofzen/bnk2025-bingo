@@ -72,20 +72,11 @@
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
       border-radius: 12px;
-      width: 100%;
-      height: 100%;
-      display: flex; 
-      justify-content: center; 
-      align-items: center;     
-      font-size: 0.85rem; 
-      font-weight: bold; 
-      line-height: 1.1;
-      text-align: center; 
-      word-break: break-word; 
-      padding: 2px; 
-      cursor: pointer; 
-      user-select: none; 
-      position: relative;
+      width: 100%; height: 100%;
+      display: flex; justify-content: center; align-items: center;     
+      font-size: 0.85rem; font-weight: bold; line-height: 1.1;
+      text-align: center; word-break: break-word; padding: 2px; 
+      cursor: pointer; user-select: none; position: relative;
       transition: opacity 0.3s ease;
     }
     .bingo-cell.hit { 
@@ -192,10 +183,40 @@
       cursor: pointer; font-family: sans-serif;
     }
     .footer-btn:hover { background: #331111; color: red; }
+
+    /* ★追加: LINEブラウザ警告用 */
+    #lineWarning {
+      display: none; /* 初期非表示 */
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #111; z-index: 9999;
+      flex-direction: column; justify-content: center; align-items: center;
+      text-align: center; padding: 20px; color: white;
+    }
+    .warning-icon { font-size: 4rem; margin-bottom: 20px; }
+    .warning-title { font-size: 1.5rem; font-weight: bold; color: #FF9933; margin-bottom: 20px; }
+    .warning-text { font-size: 1rem; line-height: 1.6; margin-bottom: 30px; }
+    .warning-arrow { 
+      position: absolute; bottom: 30px; right: 20px; 
+      font-size: 3rem; animation: bounce 1s infinite; 
+    }
+    @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-10px);} }
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 42.0 (Fresh Start)</div>
+  <div class="version-tag">Ver 43.0 (LINE Detect)</div>
+
+  <div id="lineWarning">
+    <div class="warning-icon">⚠️</div>
+    <div class="warning-title">外部ブラウザで開いてください</div>
+    <div class="warning-text">
+      LINE内のブラウザでは<br>
+      正常に動作しない可能性があります。<br><br>
+      右下のメニュー（または右上）から<br>
+      <span style="color:#DEFF66; font-weight:bold;">「デフォルトのブラウザで開く」</span><br>
+      を選択してください。
+    </div>
+    <div class="warning-arrow">↘</div>
+  </div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -247,6 +268,7 @@
       measurementId: "G-2LVWF4GVS5"
     };
     
+    // candidatesリスト（省略なし）
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -292,7 +314,6 @@
     let gameStarted = false; 
     let sessionId = null;
     
-    // ★重要: パスを更新
     const PARTICIPANTS_PATH = 'bingo_game_final_v42';
     
     const STORAGE_KEY_ID = 'bingo_user_id_v42';
@@ -309,6 +330,15 @@
     }
 
     window.onload = function() {
+      // ★LINEブラウザ検知
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.indexOf('line') > -1 && ua.indexOf('iphone') > -1) {
+          document.getElementById('lineWarning').style.display = 'flex';
+          // ログイン画面などは隠す
+          document.getElementById('loginScreen').style.display = 'none';
+          return; // 処理終了
+      }
+
       initGrid();
       
       const savedName = localStorage.getItem(STORAGE_KEY_NAME);
@@ -318,6 +348,7 @@
           playerName = savedName;
           myCard = JSON.parse(savedCard);
           sessionId = getDeviceId();
+          
           document.getElementById('playerName').value = playerName;
           startGame(true); 
           renderGrid();
@@ -424,13 +455,16 @@
       if(!confirm("ビンゴカードを破棄して退出しますか？\n（データは完全に消去されます）")) return;
       
       const uid = getDeviceId();
-      db.ref(PARTICIPANTS_PATH + '/' + uid).remove();
-
-      localStorage.removeItem(STORAGE_KEY_NAME);
-      localStorage.removeItem(STORAGE_KEY_CARD);
-      localStorage.removeItem(STORAGE_KEY_ID);
-      
-      window.location.search = 't=' + Date.now();
+      db.ref(PARTICIPANTS_PATH + '/' + uid).remove()
+        .then(() => finalizeExit())
+        .catch(() => finalizeExit());
+    }
+    
+    function finalizeExit() {
+        localStorage.removeItem(STORAGE_KEY_NAME);
+        localStorage.removeItem(STORAGE_KEY_CARD);
+        localStorage.removeItem(STORAGE_KEY_ID);
+        window.location.search = 't=' + Date.now();
     }
 
     function randomFill() {
@@ -505,7 +539,7 @@
       listContainer.scrollTop = 0;
       
       const filtered = candidates.filter(prog => {
-        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("ITS") || prog === "ZEDD MIX" || prog === "SKRILLEX" || prog === "BEERCYCLE";
+        if (genre === "SP/OTHER") return prog.includes("SP") || prog.startsWith("SKRILLEX") || prog === "BEERCYCLE";
         if (genre === "L 24/25") return prog.startsWith("L 24") || prog.startsWith("L 25");
         if (genre === "FEEL") return prog.startsWith("FEEL"); 
         if (genre === "BSW") return prog.startsWith("BSW") && !prog.startsWith("BSWi");
@@ -564,6 +598,7 @@
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
+            // 不透明度維持
             cell.style.opacity = "1"; 
           }
         } else {
