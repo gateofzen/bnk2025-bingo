@@ -68,7 +68,7 @@
       margin: 10px auto 100px auto;
     }
 
-    /* ★修正: マスのスタイル調整 */
+    /* ★修正: フォントサイズとレイアウトの厳格化 */
     .bingo-cell {
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
@@ -79,23 +79,22 @@
       justify-content: center; 
       align-items: center;
       
-      /* フォントサイズを自動調整＆上限設定 */
-      font-size: clamp(9px, 2.5vw, 12px); 
+      /* フォントサイズを少し小さめに制限 (最大10px) */
+      font-size: clamp(8px, 2.5vw, 10px); 
       font-weight: bold; 
-      line-height: 1.1;
+      line-height: 1.05; /* 行間を詰める */
       text-align: center; 
       
-      /* はみ出し防止設定 */
+      /* 単語の途中でも改行を許可してはみ出しを防ぐ */
       word-break: break-word; 
       overflow-wrap: break-word;
       
-      padding: 2px; 
+      padding: 1px; /* 余白を極小に */
       cursor: pointer; 
       user-select: none; 
       position: relative;
       transition: opacity 0.3s ease;
     }
-
     .bingo-cell.hit { 
       border: 3px solid #fff; 
       box-shadow: 0 0 20px rgba(255,255,255,0.5); 
@@ -109,15 +108,9 @@
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) rotate(-15deg);
       font-size: 2.5rem; color: rgba(255,0,0,0.8); font-weight: 900;
-      text-shadow: 
-        2px 2px 0 rgba(255,255,255,0.4), 
-        -1px -1px 0 rgba(255,255,255,0.4), 
-        1px -1px 0 rgba(255,255,255,0.4), 
-        -1px 1px 0 rgba(255,255,255,0.4), 
-        1px 1px 0 rgba(255,255,255,0.4);
-      border: 3px solid rgba(255,0,0,0.8); 
-      padding: 2px 8px; border-radius: 8px;
-      background-color: rgba(255, 255, 255, 0.3); 
+      text-shadow: 2px 2px 0 rgba(255,255,255,0.4), -1px -1px 0 rgba(255,255,255,0.4);
+      border: 3px solid rgba(255,0,0,0.8); padding: 2px 8px; border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.3);
       pointer-events: none; white-space: nowrap; font-family: sans-serif;
       box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
       animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -209,7 +202,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 44.0 (Cell Size Fix)</div>
+  <div class="version-tag">Ver 44.1 (Fit Text)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
