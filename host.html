@@ -34,25 +34,19 @@
     .container {
       text-align: center; width: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      /* 横幅を画面いっぱいに */
-      width: 100vw;
-      padding: 0;
+      width: 100vw; padding: 0 20px; box-sizing: border-box;
     }
 
     /* 結果表示エリア */
     .result-wrapper {
       width: 100%;
-      display: flex; 
-      justify-content: center;
-      align-items: center;
+      display: flex; justify-content: center; align-items: center;
       margin-bottom: 10px;
-      /* 画面幅からはみ出さないようにする */
-      padding: 0 2vw; 
+      max-width: 94vw; /* 画面幅制限 */
     }
 
     #result {
-      /* ★修正: 基本サイズを画面幅連動(vw)にする */
-      /* 画面幅の11% か 9rem の小さい方を採用 */
+      /* 初期サイズ: 画面幅連動 */
       font-size: min(11vw, 9rem);
       
       font-weight: bold; 
@@ -62,19 +56,17 @@
       line-height: 1.1; 
       z-index: 10;
       
-      white-space: nowrap; /* 1行強制 */
-      
+      white-space: nowrap; 
       padding: 15px 30px;
       border-radius: 15px;
-      
-      /* 幅は中身なり */
       width: auto;
       max-width: 100%;
+      
+      transition: background-color 0.2s ease; /* 色の変化を滑らかに */
     }
     #result:active { transform: scale(0.98); }
 
     #joinQr {
-      /* 高さを画面の高さ基準にしてはみ出し防止 */
       height: 25vh; width: auto; aspect-ratio: 1/1;
       margin: 20px auto;
       border: 6px solid white; border-radius: 15px;
@@ -103,13 +95,9 @@
         display: flex; gap: 8px; z-index: 1000;
     }
     .admin-btn {
-        background: rgba(0,0,0,0.4); 
-        color: #666; 
-        border: 1px solid #444; 
-        padding: 6px 12px;
-        font-size: 0.7rem; 
-        cursor: pointer; 
-        border-radius: 4px;
+        background: rgba(0,0,0,0.4); color: #666; 
+        border: 1px solid #444; padding: 6px 12px;
+        font-size: 0.7rem; cursor: pointer; border-radius: 4px;
         transition: all 0.2s;
     }
     .admin-btn:hover { background: #333; color: white; border-color: #888; }
@@ -189,7 +177,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 55.0</div>
+  <div class="version-tag">Ver 56.0</div>
 
   <div class="admin-controls">
       <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
@@ -204,7 +192,6 @@
     <div class="result-wrapper">
         <p id="result">ARE U READY?</p>
     </div>
-    
     <img id="joinQr" src="./qr-code.png" alt="Join Game" onclick="performDraw()">
     <div id="historyContainer">
       <p style="font-size:1rem; margin:0; opacity:0.7;">Past Results:</p>
@@ -300,7 +287,15 @@
     let initialWinnerKeys = new Set();
 
     window.onload = function() {
-      // Wake Lock (自動)
+      // ★修正: 画面サイズ変更（回転）時に再計算
+      window.addEventListener('resize', () => {
+          const currentText = resultElement.textContent;
+          if(currentText) {
+              adjustFontSize(currentText); // サイズ再計算
+              applyStyle(resultElement, currentText); // 色再適用
+          }
+      });
+
       document.addEventListener('click', async () => {
         try {
           if ('wakeLock' in navigator) {
@@ -308,9 +303,6 @@
           }
         } catch(e) {}
       }, { once: true });
-      
-      // ★初期サイズ調整（リロード時など）
-      adjustFontSize('ARE U READY?');
 
       db.ref('gameState/history').once('value').then(snapshot => {
         const savedHistory = snapshot.val();
@@ -326,15 +318,16 @@
           if(savedHistory.length > 0) {
             const latest = savedHistory[0];
             resultElement.textContent = latest;
-            
-            // ★データ読み込み後のサイズ調整
+            // ★初期調整
             adjustFontSize(latest);
             applyStyle(resultElement, latest);
-            
             qrElement.style.display = 'none';
           } else {
             qrElement.style.display = 'block';
           }
+        } else {
+          // 初期状態でもARE U READYのサイズ調整
+          adjustFontSize(resultElement.textContent);
         }
       });
 
@@ -380,11 +373,8 @@
             }
             const finalResult = drawRandomCandidate();
             resultElement.textContent = finalResult;
-            
-            // ★テスト中も毎回フィットさせる
             adjustFontSize(finalResult);
             applyStyle(resultElement, finalResult);
-            
             addToHistoryUI(finalResult);
             updateFirebase(finalResult);
             qrElement.style.display = 'none';
@@ -528,23 +518,18 @@
       isAnimating = true;
       const finalResult = drawRandomCandidate();
 
-      // アニメーション
       animationInterval = setInterval(() => {
         const temp = availableCandidates[Math.floor(Math.random() * availableCandidates.length)] || finalResult;
         resultElement.textContent = temp;
-        // アニメ中はフォントサイズ計算を省略（ちらつき防止のためCSSのmaxに任せる）
-        // または簡易計算を入れる
+        // アニメ中も調整
+        adjustFontSize(temp);
         applyStyle(resultElement, temp);
       }, 100);
 
-      // 1.3秒後に確定
       setTimeout(() => {
         clearInterval(animationInterval);
         resultElement.textContent = finalResult;
-        
-        // ★確定時は必ずフィットさせる
         adjustFontSize(finalResult);
-        
         applyStyle(resultElement, finalResult);
         addToHistoryUI(finalResult);
         updateFirebase(finalResult);
@@ -553,33 +538,23 @@
       }, 1300);
     }
 
-    // ★改良版: 確実なフォントサイズフィット関数
     function adjustFontSize(text) {
-        const containerWidth = window.innerWidth * 0.94; // 画面幅の94%
+        const maxW = window.innerWidth * 0.95;
+        let size = 9;
+        if(text.length > 14) size = 4.5;
+        else if(text.length > 10) size = 6.5;
+        else if(text.length > 7) size = 8;
         
-        // 1. まずは文字数に応じた初期サイズを設定（リセット）
-        // これにより「前の文字が小さかったから次も小さいまま」を防ぐ
-        let size = 9; // デフォルト最大
+        resultElement.style.fontSize = size + 'rem';
         
-        if (text.length > 14) size = 5;
-        else if (text.length > 10) size = 6.5;
-        else if (text.length > 7) size = 8;
-        
-        resultElement.style.fontSize = size + "rem";
-
-        // 2. 実際にはみ出していないかチェックし、はみ出すなら縮小するループ
-        // 描画待ちのため少しだけ遅延させる
+        // 強制縮小ループ
         setTimeout(() => {
-            // 現在のピクセル幅を取得
-            let currentWidth = resultElement.getBoundingClientRect().width;
-            
-            // ループ回数制限付きで縮小
-            let loopCount = 0;
-            while (currentWidth > containerWidth && size > 1 && loopCount < 50) {
-                size -= 0.2; // 0.2rem刻みで小さく
-                resultElement.style.fontSize = size + "rem";
-                currentWidth = resultElement.getBoundingClientRect().width;
-                loopCount++;
+            let currentSize = parseFloat(resultElement.style.fontSize);
+            let safety = 0;
+            while (resultElement.scrollWidth > maxW && currentSize > 1 && safety < 50) {
+                currentSize -= 0.5;
+                resultElement.style.fontSize = currentSize + 'rem';
+                safety++;
             }
         }, 0);
     }
@@ -629,8 +604,8 @@
       element.style.backgroundColor = bgColor; element.style.color = textColor;
       if (!isHistoryItem) { 
           element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; 
-          element.style.borderRadius = '15px';
-          // フォントサイズはadjustFontSizeで管理するためここでは触らない
+          element.style.borderRadius = '10px';
+          // フォントサイズは再設定しない（JS計算値を維持）
       }
       else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; element.style.borderRadius = '5px'; }
     }
