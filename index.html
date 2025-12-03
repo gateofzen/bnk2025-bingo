@@ -68,7 +68,7 @@
       margin: 10px auto 100px auto;
     }
 
-    /* ★修正: フォントサイズとレイアウトの厳格化 */
+    /* ★修正: 1行表示に戻し、サイズ調整 */
     .bingo-cell {
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
@@ -79,17 +79,17 @@
       justify-content: center; 
       align-items: center;
       
-      /* フォントサイズを少し小さめに制限 (最大10px) */
-      font-size: clamp(8px, 2.5vw, 10px); 
+      /* スマホ・タブレット両対応のサイズ感 */
+      font-size: clamp(9px, 2.8vw, 13px);
       font-weight: bold; 
-      line-height: 1.05; /* 行間を詰める */
+      line-height: 1.1;
       text-align: center; 
       
-      /* 単語の途中でも改行を許可してはみ出しを防ぐ */
-      word-break: break-word; 
-      overflow-wrap: break-word;
+      /* 改行禁止 */
+      white-space: nowrap;
+      overflow: hidden; /* はみ出た分は隠す（基本clampで収まる想定） */
       
-      padding: 1px; /* 余白を極小に */
+      padding: 2px; 
       cursor: pointer; 
       user-select: none; 
       position: relative;
@@ -108,9 +108,15 @@
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) rotate(-15deg);
       font-size: 2.5rem; color: rgba(255,0,0,0.8); font-weight: 900;
-      text-shadow: 2px 2px 0 rgba(255,255,255,0.4), -1px -1px 0 rgba(255,255,255,0.4);
-      border: 3px solid rgba(255,0,0,0.8); padding: 2px 8px; border-radius: 8px;
-      background-color: rgba(255, 255, 255, 0.3);
+      text-shadow: 
+        2px 2px 0 rgba(255,255,255,0.4), 
+        -1px -1px 0 rgba(255,255,255,0.4), 
+        1px -1px 0 rgba(255,255,255,0.4), 
+        -1px 1px 0 rgba(255,255,255,0.4), 
+        1px 1px 0 rgba(255,255,255,0.4);
+      border: 3px solid rgba(255,0,0,0.8); 
+      padding: 2px 8px; border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.3); 
       pointer-events: none; white-space: nowrap; font-family: sans-serif;
       box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
       animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -202,7 +208,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 44.1 (Fit Text)</div>
+  <div class="version-tag">Ver 47.0 (No Wrap)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -254,6 +260,7 @@
       measurementId: "G-2LVWF4GVS5"
     };
     
+    // 候補リストは省略（Ver46と同じ）
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
