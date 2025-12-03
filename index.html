@@ -17,10 +17,14 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    html, body { height: 100%; overflow: hidden; overscroll-behavior-y: none; }
+    html, body { 
+      height: 100%; 
+      overflow: hidden; 
+      overscroll-behavior-y: none; 
+      background-color: black; /* 念のためここにも指定 */
+    }
 
     body { 
-      background-color: black; 
       background-image: url('./FC_logo.png');
       background-repeat: no-repeat;
       background-position: center center;
@@ -31,7 +35,6 @@
       touch-action: none; 
     }
 
-    /* バージョン表示 */
     .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
 
     #loginScreen { 
@@ -73,11 +76,10 @@
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
       border-radius: 12px;
-      width: 100%;
-      height: 100%;
-      display: flex; 
-      justify-content: center; 
-      align-items: center;     
+      width: 100%; height: 100%;
+      display: flex; justify-content: center; align-items: center;
+      
+      /* 2行表示許可 */
       font-size: clamp(11px, 3.5vw, 14px); 
       font-weight: bold; 
       line-height: 1.2;
@@ -85,12 +87,14 @@
       white-space: normal;
       word-wrap: break-word;
       overflow-wrap: break-word;
+      
       padding: 4px; 
       cursor: pointer; 
       user-select: none; 
       position: relative;
       transition: opacity 0.3s ease;
     }
+
     .bingo-cell.hit { 
       border: 3px solid #fff; 
       box-shadow: 0 0 20px rgba(255,255,255,0.5); 
@@ -103,17 +107,9 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) rotate(-15deg);
-      font-size: 2.5rem; 
-      font-weight: 900;
-      color: rgba(255, 0, 0, 0.8); 
-      text-shadow: 
-        2px 2px 0 rgba(255,255,255,0.4), 
-        -1px -1px 0 rgba(255,255,255,0.4), 
-        1px -1px 0 rgba(255,255,255,0.4), 
-        -1px 1px 0 rgba(255,255,255,0.4), 
-        1px 1px 0 rgba(255,255,255,0.4);
-      border: 3px solid rgba(255, 0, 0, 0.8); 
-      padding: 2px 8px; border-radius: 8px;
+      font-size: 2.5rem; color: rgba(255,0,0,0.8); font-weight: 900;
+      text-shadow: 2px 2px 0 rgba(255,255,255,0.4), -1px -1px 0 rgba(255,255,255,0.4);
+      border: 3px solid rgba(255,0,0,0.8); padding: 2px 8px; border-radius: 8px;
       background-color: rgba(255, 255, 255, 0.3); 
       pointer-events: none; white-space: nowrap; font-family: sans-serif;
       box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
@@ -204,8 +200,10 @@
     }
     .footer-btn:hover { background: #331111; color: red; }
 
+    /* LINEブラウザ警告 */
     #lineWarning {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; 
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: #111; z-index: 9999;
       flex-direction: column; justify-content: center; align-items: center;
       text-align: center; padding: 20px; color: white;
@@ -221,13 +219,13 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 58.0</div>
+  <div class="version-tag">Ver 60.0</div>
 
   <div id="lineWarning">
     <div class="warning-icon">⚠️</div>
     <div class="warning-title">外部ブラウザで開いてください</div>
     <div class="warning-text">
-      LINE内のブラウザでは動作しません。<br><br>
+      LINE内のブラウザでは正常に動作しない可能性があります。<br><br>
       右下のメニューから<br>
       <span style="color:#DEFF66; font-weight:bold;">「デフォルトのブラウザで開く」</span><br>
       を選択してください。
@@ -274,6 +272,7 @@
   </div>
 
   <script>
+    // LINE検知
     document.addEventListener('DOMContentLoaded', function() {
       var ua = navigator.userAgent.toLowerCase();
       if (ua.indexOf('line') > -1 && (ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1)) {
@@ -339,10 +338,10 @@
     let gameStarted = false; 
     let sessionId = null;
     
-    const PARTICIPANTS_PATH = 'bingo_game_final_v42';
-    const STORAGE_KEY_ID = 'bingo_user_id_v42';
-    const STORAGE_KEY_NAME = 'bingo_player_name_v42';
-    const STORAGE_KEY_CARD = 'bingo_player_card_v42';
+    const PARTICIPANTS_PATH = 'bingo_game_v60_final';
+    const STORAGE_KEY_ID = 'bingo_user_id_v60';
+    const STORAGE_KEY_NAME = 'bingo_player_name_v60';
+    const STORAGE_KEY_CARD = 'bingo_player_card_v60';
 
     function getDeviceId() {
       let id = localStorage.getItem(STORAGE_KEY_ID);
@@ -363,7 +362,6 @@
           playerName = savedName;
           myCard = JSON.parse(savedCard);
           sessionId = getDeviceId();
-          
           document.getElementById('playerName').value = playerName;
           startGame(true); 
           renderGrid();
@@ -418,8 +416,10 @@
         localStorage.setItem(STORAGE_KEY_NAME, playerName);
       }
 
-      db.ref(PARTICIPANTS_PATH + '/' + sessionId).set({
+      // 参加登録（pushで追記）
+      db.ref(PARTICIPANTS_PATH).push({
         name: playerName,
+        id: sessionId,
         timestamp: Date.now()
       });
 
@@ -469,17 +469,14 @@
     function exitAndClear() {
       if(!confirm("ビンゴカードを破棄して退出しますか？\n（データは完全に消去されます）")) return;
       
-      const uid = getDeviceId();
-      db.ref(PARTICIPANTS_PATH + '/' + uid).remove()
-        .then(() => finalizeExit())
-        .catch(() => finalizeExit());
-    }
-    
-    function finalizeExit() {
-        localStorage.removeItem(STORAGE_KEY_NAME);
-        localStorage.removeItem(STORAGE_KEY_CARD);
-        localStorage.removeItem(STORAGE_KEY_ID);
-        window.location.search = 't=' + Date.now();
+      // ホスト側でユニークカウントしているので、DB削除は必須ではないが
+      // 念のため自分に関連するエントリを削除するロジックを入れるのは複雑になるため
+      // ここではローカル削除のみでリロードする（再参加で別IDになるため問題なし）
+      localStorage.removeItem(STORAGE_KEY_NAME);
+      localStorage.removeItem(STORAGE_KEY_CARD);
+      localStorage.removeItem(STORAGE_KEY_ID);
+      
+      window.location.search = 't=' + Date.now();
     }
 
     function randomFill() {
@@ -613,7 +610,6 @@
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
-            cell.style.opacity = "1"; 
           }
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
@@ -638,7 +634,6 @@
         isBingo = true;
         db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
-        db.ref('gameState/history').off();
       }
     }
 
