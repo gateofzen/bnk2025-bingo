@@ -29,7 +29,6 @@
       position: relative; overflow: hidden;
     }
 
-    /* ★修正: 真ん中上に配置 */
     .version-tag { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #888; z-index: 2000; font-family: sans-serif; }
 
     .container {
@@ -37,14 +36,13 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
 
-    /* ★修正: 1行表示・折り返し禁止 */
     #result {
       font-size: 9rem; font-weight: bold; margin-bottom: 10px;
       display: inline-block; cursor: pointer;
       text-shadow: 0 0 10px rgba(0,0,0,0.5);
       min-height: 1.2em; line-height: 1.2; z-index: 10;
-      white-space: nowrap; /* 折り返し禁止 */
-      transition: font-size 0.1s; /* スムーズにサイズ変更 */
+      white-space: nowrap; 
+      transition: font-size 0.1s;
     }
     #result:active { transform: scale(0.98); }
 
@@ -71,12 +69,10 @@
     }
     #linkButton:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
 
-    /* ★修正: ボタンコンテナ（右上・横並び） */
     .admin-controls {
         position: fixed; top: 15px; right: 15px;
         display: flex; gap: 8px; z-index: 1000;
     }
-    /* ★修正: 目立たないボタンスタイル */
     .admin-btn {
         background: rgba(0,0,0,0.4); 
         color: #666; 
@@ -88,7 +84,6 @@
         transition: all 0.2s;
     }
     .admin-btn:hover { background: #333; color: white; border-color: #888; }
-    /* FULL WIPEはホバー時に赤くして警告 */
     .btn-danger:hover { background: #500; color: #ffcccc; border-color: red; }
 
     #playerCounter {
@@ -165,7 +160,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 43.0</div>
+  <div class="version-tag">Ver 44.0</div>
 
   <div class="admin-controls">
       <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
@@ -269,6 +264,7 @@
     let playersData = []; 
     let winnersData = []; 
     
+    // ★Ver 44.0: パス更新
     const PARTICIPANTS_PATH = 'bingo_game_final_v42';
     let initialWinnerKeys = new Set();
 
@@ -295,6 +291,7 @@
           if(savedHistory.length > 0) {
             const latest = savedHistory[0];
             resultElement.textContent = latest;
+            adjustFontSize(latest);
             applyStyle(resultElement, latest);
             qrElement.style.display = 'none';
           } else {
@@ -335,7 +332,6 @@
       });
     };
 
-    // テストモード
     function runTestMode() {
         if(!confirm("テストモードを開始しますか？")) return;
         let count = 0;
@@ -346,6 +342,7 @@
             }
             const finalResult = drawRandomCandidate();
             resultElement.textContent = finalResult;
+            adjustFontSize(finalResult);
             applyStyle(resultElement, finalResult);
             addToHistoryUI(finalResult);
             updateFirebase(finalResult);
@@ -404,7 +401,6 @@
       document.getElementById('playerListModal').style.display = 'flex';
     }
 
-    // 1. ゲームだけリセット
     function resetGame() {
       if(!confirm("ゲームをリセットしますか？\n（参加者リストとカードは維持されます）")) return;
       db.ref('gameState').remove();
@@ -413,7 +409,6 @@
       location.reload();
     }
 
-    // 2. 完全リセット
     function resetAllData() {
       if(!confirm("⚠ DANGER ⚠\n参加者リストも含めて全て強制消去します。\n本当に実行しますか？")) return;
       db.ref('gameState').remove();
@@ -494,7 +489,6 @@
 
       animationInterval = setInterval(() => {
         const temp = availableCandidates[Math.floor(Math.random() * availableCandidates.length)] || finalResult;
-        // ★修正: フォントサイズ自動調整
         resultElement.textContent = temp;
         adjustFontSize(temp);
         applyStyle(resultElement, temp);
@@ -512,7 +506,6 @@
       }, 1300);
     }
 
-    // ★追加: 文字数によるフォントサイズ調整関数
     function adjustFontSize(text) {
         if(text.length > 14) resultElement.style.fontSize = '5rem';
         else if(text.length > 10) resultElement.style.fontSize = '7rem';
@@ -564,7 +557,6 @@
       element.style.backgroundColor = bgColor; element.style.color = textColor;
       if (!isHistoryItem) { 
           element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; 
-          // ★フォントサイズはJSで制御するのでここでは指定しない
       }
       else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; }
     }
