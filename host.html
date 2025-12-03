@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BNK2025 - HOST FINAL</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -34,10 +34,13 @@
     .container {
       text-align: center; width: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
+      /* 横幅を画面いっぱいに */
+      max-width: 100vw;
+      padding: 0 10px;
     }
 
+    /* ★修正: 帯と文字の関係を適正化 */
     #result {
-      /* 初期サイズ */
       font-size: 9rem; 
       font-weight: bold; 
       margin-bottom: 10px;
@@ -48,11 +51,11 @@
       line-height: 1.2; 
       z-index: 10;
       
-      white-space: nowrap;
-      max-width: 95vw;     /* 画面幅の95%まで */
-      overflow: visible;   
+      white-space: nowrap; /* 1行強制 */
+      /* max-widthは設定せず、JSでフォントサイズを制御して画面内に収める */
+      width: auto;
       
-      /* アニメーション中はtransitionを切るためJSで制御 */
+      transition: font-size 0.05s ease;
     }
     #result:active { transform: scale(0.98); }
 
@@ -170,7 +173,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 48.0 (Font Fix)</div>
+  <div class="version-tag">Ver 49.0 (Auto-Resize Fix)</div>
 
   <div class="admin-controls">
       <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
@@ -216,7 +219,6 @@
       measurementId: "G-2LVWF4GVS5"
     };
 
-    // candidatesリスト (Ver42.0と同じ、完全なもの)
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -301,7 +303,8 @@
           if(savedHistory.length > 0) {
             const latest = savedHistory[0];
             resultElement.textContent = latest;
-            adjustFontSize(latest, true); // 初期表示も調整
+            // ★初期表示時も確実にサイズ調整
+            adjustFontSize(latest, true);
             applyStyle(resultElement, latest);
             qrElement.style.display = 'none';
           } else {
@@ -342,7 +345,6 @@
       });
     };
 
-    // テストモード
     function runTestMode() {
         if(!confirm("テストモードを開始しますか？")) return;
         let count = 0;
@@ -353,7 +355,7 @@
             }
             const finalResult = drawRandomCandidate();
             resultElement.textContent = finalResult;
-            adjustFontSize(finalResult, true); // テスト中も調整
+            adjustFontSize(finalResult, true); // 毎回調整
             applyStyle(resultElement, finalResult);
             addToHistoryUI(finalResult);
             updateFirebase(finalResult);
@@ -501,7 +503,7 @@
       animationInterval = setInterval(() => {
         const temp = availableCandidates[Math.floor(Math.random() * availableCandidates.length)] || finalResult;
         resultElement.textContent = temp;
-        adjustFontSize(temp, false); // アニメーション中は簡易調整
+        adjustFontSize(temp, false); // アニメーション中は高速簡易調整
         applyStyle(resultElement, temp);
       }, 100);
 
@@ -517,26 +519,22 @@
       }, 1300);
     }
 
-    // ★修正: フォント自動調整ロジック (アニメ用と確定用)
+    // ★修正: 厳密なサイズ自動調整
     function adjustFontSize(text, isFinal) {
-        // 1. まずは文字数で大まかにセット
         let size = 9;
         if(text.length > 14) size = 4.5;
         else if(text.length > 10) size = 6.5;
         else if(text.length > 7) size = 8;
         
-        // リセット
         resultElement.style.fontSize = size + 'rem';
 
-        // 2. 確定時のみ、はみ出しチェックを行って微調整
-        // （アニメーション中にやると重くなるため）
         if (isFinal) {
             setTimeout(() => {
-                const maxWidth = window.innerWidth * 0.90; // 画面の90%
+                const maxWidth = window.innerWidth * 0.90;
                 let currentSize = parseFloat(resultElement.style.fontSize);
-                
-                // ループで小さくしていく (最小2rem)
                 let iterations = 0;
+                
+                // はみ出しチェックループ
                 while (resultElement.scrollWidth > maxWidth && currentSize > 2 && iterations < 20) {
                     currentSize -= 0.2;
                     resultElement.style.fontSize = currentSize + 'rem';
@@ -586,7 +584,7 @@
       else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
       else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
       else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
-      else if (text === "SKRILLEX") { bgColor = 'white'; textColor = 'black'; }
+      else if (text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") { bgColor = 'white'; textColor = 'black'; }
       
       element.style.backgroundColor = bgColor; element.style.color = textColor;
       if (!isHistoryItem) { 
