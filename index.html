@@ -31,8 +31,7 @@
       touch-action: none; 
     }
 
-    /* バージョン表示（右上のままシンプルに） */
-    .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #666; z-index: 2000; font-family: sans-serif; }
+    .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
 
     #loginScreen { 
       position: fixed; top:0; left:0; width:100%; height:100%; 
@@ -69,17 +68,34 @@
       margin: 10px auto 100px auto;
     }
 
+    /* ★修正: マスのスタイル調整 */
     .bingo-cell {
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
       border-radius: 12px;
-      width: 100%; height: 100%;
-      display: flex; justify-content: center; align-items: center;     
-      font-size: 0.85rem; font-weight: bold; line-height: 1.1;
-      text-align: center; word-break: break-word; padding: 2px; 
-      cursor: pointer; user-select: none; position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      
+      /* フォントサイズを自動調整＆上限設定 */
+      font-size: clamp(9px, 2.5vw, 12px); 
+      font-weight: bold; 
+      line-height: 1.1;
+      text-align: center; 
+      
+      /* はみ出し防止設定 */
+      word-break: break-word; 
+      overflow-wrap: break-word;
+      
+      padding: 2px; 
+      cursor: pointer; 
+      user-select: none; 
+      position: relative;
       transition: opacity 0.3s ease;
     }
+
     .bingo-cell.hit { 
       border: 3px solid #fff; 
       box-shadow: 0 0 20px rgba(255,255,255,0.5); 
@@ -93,9 +109,15 @@
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) rotate(-15deg);
       font-size: 2.5rem; color: rgba(255,0,0,0.8); font-weight: 900;
-      text-shadow: 2px 2px 0 rgba(255,255,255,0.4), -1px -1px 0 rgba(255,255,255,0.4);
-      border: 3px solid rgba(255,0,0,0.8); padding: 2px 8px; border-radius: 8px;
-      background-color: rgba(255, 255, 255, 0.3);
+      text-shadow: 
+        2px 2px 0 rgba(255,255,255,0.4), 
+        -1px -1px 0 rgba(255,255,255,0.4), 
+        1px -1px 0 rgba(255,255,255,0.4), 
+        -1px 1px 0 rgba(255,255,255,0.4), 
+        1px 1px 0 rgba(255,255,255,0.4);
+      border: 3px solid rgba(255,0,0,0.8); 
+      padding: 2px 8px; border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.3); 
       pointer-events: none; white-space: nowrap; font-family: sans-serif;
       box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
       animation: stampIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -187,7 +209,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 43.0</div>
+  <div class="version-tag">Ver 44.0 (Cell Size Fix)</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -284,7 +306,7 @@
     let gameStarted = false; 
     let sessionId = null;
     
-    const PARTICIPANTS_PATH = 'bingo_game_v42';
+    const PARTICIPANTS_PATH = 'bingo_game_final_v42';
     
     const STORAGE_KEY_ID = 'bingo_user_id_v42';
     const STORAGE_KEY_NAME = 'bingo_player_name_v42';
@@ -453,10 +475,35 @@
       const tabContainer = document.getElementById('genreTabs');
       tabContainer.innerHTML = "";
       const genres = ["BB2", "BB3", "BB1", "BSW", "BSB", "BSL", "BSWi", "BSBi", "FEEL", "L 24/25", "SP/OTHER"];
+      
+      const tabColors = {
+          "BB1": {bg: "#FFFF00", color: "black"},
+          "BB2": {bg: "#FF9933", color: "black"},
+          "BB3": {bg: "#FF3300", color: "black"},
+          "BSW": {bg: "#CC66FF", color: "white"},
+          "BSB": {bg: "#00CCFF", color: "black"},
+          "BSL": {bg: "#0000CC", color: "white"},
+          "BSWi": {bg: "#990099", color: "#FFEF7F"},
+          "BSBi": {bg: "#336699", color: "#DEFF66"},
+          "FEEL": {bg: "#B08A3A", color: "white"},
+          "L 24/25": {bg: "#00121C", color: "white"},
+          "SP/OTHER": {bg: "white", color: "black"}
+      };
+
       genres.forEach(g => {
         const span = document.createElement('span');
         span.className = 'genre-tab';
-        if(g === currentGenre) span.classList.add('active');
+        if(g === currentGenre) {
+            span.classList.add('active');
+        }
+        
+        const style = tabColors[g];
+        if(style) {
+            span.style.backgroundColor = style.bg;
+            span.style.color = style.color;
+            span.style.borderColor = style.color;
+        }
+
         span.textContent = g;
         span.onclick = function() {
           currentGenre = g; renderTabs(); renderList(g);
