@@ -36,8 +36,8 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
 
-    /* ★修正: 自動調整のため nowrap に戻し、max-widthを設定 */
     #result {
+      /* 初期サイズ */
       font-size: 9rem; 
       font-weight: bold; 
       margin-bottom: 10px;
@@ -48,11 +48,11 @@
       line-height: 1.2; 
       z-index: 10;
       
-      white-space: nowrap; /* 1行強制 */
-      max-width: 90vw;     /* 画面幅の90%まで */
+      white-space: nowrap;
+      max-width: 95vw;     /* 画面幅の95%まで */
       overflow: visible;   
       
-      transition: font-size 0.1s ease;
+      /* アニメーション中はtransitionを切るためJSで制御 */
     }
     #result:active { transform: scale(0.98); }
 
@@ -170,7 +170,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 47.0 (Auto Fit Host)</div>
+  <div class="version-tag">Ver 48.0 (Font Fix)</div>
 
   <div class="admin-controls">
       <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
@@ -216,7 +216,7 @@
       measurementId: "G-2LVWF4GVS5"
     };
 
-    // candidatesリスト（省略）
+    // candidatesリスト (Ver42.0と同じ、完全なもの)
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -275,7 +275,7 @@
     let playersData = []; 
     let winnersData = []; 
     
-    const PARTICIPANTS_PATH = 'bingo_game_final_v42';
+    const PARTICIPANTS_PATH = 'bingo_game_final_v42'; // Ver42と共有
     let initialWinnerKeys = new Set();
 
     window.onload = function() {
@@ -301,7 +301,7 @@
           if(savedHistory.length > 0) {
             const latest = savedHistory[0];
             resultElement.textContent = latest;
-            adjustFontSize(latest);
+            adjustFontSize(latest, true); // 初期表示も調整
             applyStyle(resultElement, latest);
             qrElement.style.display = 'none';
           } else {
@@ -342,26 +342,7 @@
       });
     };
 
-    // ★修正: 自動調整ロジック強化 (縮小ループ)
-    function adjustFontSize(text) {
-        // 初期サイズ
-        let size = 9;
-        if(text.length > 14) size = 5;
-        else if(text.length > 8) size = 7;
-        
-        resultElement.style.fontSize = size + 'rem';
-        
-        // はみ出しチェック＆縮小
-        setTimeout(() => {
-            const maxWidth = window.innerWidth * 0.95;
-            while(resultElement.scrollWidth > maxWidth && size > 3) {
-                size -= 0.2;
-                resultElement.style.fontSize = size + 'rem';
-            }
-        }, 0);
-    }
-
-    // ... (以下、省略せず前回のロジックと同じ)
+    // テストモード
     function runTestMode() {
         if(!confirm("テストモードを開始しますか？")) return;
         let count = 0;
@@ -372,7 +353,7 @@
             }
             const finalResult = drawRandomCandidate();
             resultElement.textContent = finalResult;
-            adjustFontSize(finalResult); // ここでも調整
+            adjustFontSize(finalResult, true); // テスト中も調整
             applyStyle(resultElement, finalResult);
             addToHistoryUI(finalResult);
             updateFirebase(finalResult);
@@ -520,20 +501,49 @@
       animationInterval = setInterval(() => {
         const temp = availableCandidates[Math.floor(Math.random() * availableCandidates.length)] || finalResult;
         resultElement.textContent = temp;
-        adjustFontSize(temp);
+        adjustFontSize(temp, false); // アニメーション中は簡易調整
         applyStyle(resultElement, temp);
       }, 100);
 
       setTimeout(() => {
         clearInterval(animationInterval);
         resultElement.textContent = finalResult;
-        adjustFontSize(finalResult);
+        adjustFontSize(finalResult, true); // 最終確定時は厳密調整
         applyStyle(resultElement, finalResult);
         addToHistoryUI(finalResult);
         updateFirebase(finalResult);
         isAnimating = false;
         if (availableCandidates.length === 0) setTimeout(() => alert("全てのプログラムが終了しました！"), 1000);
       }, 1300);
+    }
+
+    // ★修正: フォント自動調整ロジック (アニメ用と確定用)
+    function adjustFontSize(text, isFinal) {
+        // 1. まずは文字数で大まかにセット
+        let size = 9;
+        if(text.length > 14) size = 4.5;
+        else if(text.length > 10) size = 6.5;
+        else if(text.length > 7) size = 8;
+        
+        // リセット
+        resultElement.style.fontSize = size + 'rem';
+
+        // 2. 確定時のみ、はみ出しチェックを行って微調整
+        // （アニメーション中にやると重くなるため）
+        if (isFinal) {
+            setTimeout(() => {
+                const maxWidth = window.innerWidth * 0.90; // 画面の90%
+                let currentSize = parseFloat(resultElement.style.fontSize);
+                
+                // ループで小さくしていく (最小2rem)
+                let iterations = 0;
+                while (resultElement.scrollWidth > maxWidth && currentSize > 2 && iterations < 20) {
+                    currentSize -= 0.2;
+                    resultElement.style.fontSize = currentSize + 'rem';
+                    iterations++;
+                }
+            }, 0);
+        }
     }
 
     function updateFirebase(result) {
@@ -576,12 +586,11 @@
       else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
       else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
       else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
-      else if (text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") { bgColor = 'white'; textColor = 'black'; }
+      else if (text === "SKRILLEX") { bgColor = 'white'; textColor = 'black'; }
       
       element.style.backgroundColor = bgColor; element.style.color = textColor;
       if (!isHistoryItem) { 
           element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; 
-          // フォントサイズはadjustFontSizeで管理
           element.style.borderRadius = '10px';
       }
       else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; element.style.borderRadius = '5px'; }
