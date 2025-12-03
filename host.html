@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BNK2025 - HOST FINAL</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -15,44 +15,54 @@
       font-style: normal;
     }
 
-    body {
-      font-family: 'BrotherXL', Arial, sans-serif;
+    /* ★修正: 画面全体の固定 */
+    html, body {
+      width: 100%; height: 100%;
       margin: 0; padding: 0;
+      overflow: hidden; /* スクロール禁止 */
       background-color: black;
       background-image: url('./FC_logo.png');
       background-repeat: no-repeat;
       background-position: center center;
       background-attachment: fixed;
       background-size: cover;
-      display: flex; justify-content: center; align-items: center;
-      flex-direction: column; height: 100vh; color: white;
-      position: relative; overflow: hidden;
+      font-family: 'BrotherXL', Arial, sans-serif;
+      color: white;
     }
 
-    /* ★修正: シンプルなバージョン表示 */
     .version-tag { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #888; z-index: 2000; font-family: sans-serif; }
 
     .container {
-      text-align: center; width: 100%;
+      width: 100%; height: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
 
+    /* ★修正: 結果表示のラッパー（ここからはみ出さないようにする） */
+    .result-wrapper {
+      width: 100%;
+      display: flex; justify-content: center;
+      margin-bottom: 10px;
+      /* はみ出し防止 */
+      overflow: hidden; 
+    }
+
+    /* ★修正: 結果表示本体 */
     #result {
       font-size: 9rem; 
       font-weight: bold; 
-      margin-bottom: 10px;
       display: inline-block; 
       cursor: pointer;
       text-shadow: 0 0 10px rgba(0,0,0,0.5);
       min-height: 1.2em; 
       line-height: 1.2; 
       z-index: 10;
-      
       white-space: nowrap;
-      max-width: 95vw;
-      overflow: visible;
       
-      transition: font-size 0.1s ease;
+      /* max-widthは削除し、JSで制御する */
+      padding: 20px 40px;
+      border-radius: 10px;
+      
+      transition: font-size 0.05s ease;
     }
     #result:active { transform: scale(0.98); }
 
@@ -170,7 +180,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 50.0</div>
+  <div class="version-tag">Ver 51.0</div>
 
   <div class="admin-controls">
       <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
@@ -182,7 +192,10 @@
   <div id="testTrigger" onclick="runTestMode()"></div>
 
   <div class="container">
-    <p id="result">ARE U READY?</p>
+    <div class="result-wrapper">
+        <p id="result">ARE U READY?</p>
+    </div>
+    
     <img id="joinQr" src="./qr-code.png" alt="Join Game" onclick="performDraw()">
     <div id="historyContainer">
       <p style="font-size:1rem; margin:0; opacity:0.7;">Past Results:</p>
@@ -300,8 +313,7 @@
           if(savedHistory.length > 0) {
             const latest = savedHistory[0];
             resultElement.textContent = latest;
-            // ★修正: 初期表示も調整
-            adjustFontSize(latest, true);
+            adjustFontSize(latest, true); // 初期表示時も調整
             applyStyle(resultElement, latest);
             qrElement.style.display = 'none';
           } else {
@@ -352,8 +364,7 @@
             }
             const finalResult = drawRandomCandidate();
             resultElement.textContent = finalResult;
-            // ★修正: テスト中も調整
-            adjustFontSize(finalResult, true);
+            adjustFontSize(finalResult, false); // アニメ中は簡易調整
             applyStyle(resultElement, finalResult);
             addToHistoryUI(finalResult);
             updateFirebase(finalResult);
@@ -501,15 +512,14 @@
       animationInterval = setInterval(() => {
         const temp = availableCandidates[Math.floor(Math.random() * availableCandidates.length)] || finalResult;
         resultElement.textContent = temp;
-        adjustFontSize(temp, false); // 簡易調整
+        adjustFontSize(temp, false); // アニメーション中は簡易計算
         applyStyle(resultElement, temp);
       }, 100);
 
       setTimeout(() => {
         clearInterval(animationInterval);
         resultElement.textContent = finalResult;
-        // ★修正: 確定時に厳密調整
-        adjustFontSize(finalResult, true);
+        adjustFontSize(finalResult, true); // 確定時に厳密に計算
         applyStyle(resultElement, finalResult);
         addToHistoryUI(finalResult);
         updateFirebase(finalResult);
@@ -518,25 +528,26 @@
       }, 1300);
     }
 
-    // ★修正: 強化された自動調整ロジック
+    // ★修正: 厳密なサイズ調整ロジック
     function adjustFontSize(text, isFinal) {
-        const maxW = window.innerWidth * 0.95;
+        // 初期サイズリセット
         let size = 9;
-        
-        // 文字数による初期推定
-        if(text.length > 20) size = 4;
-        else if(text.length > 15) size = 5;
-        else if(text.length > 10) size = 7;
+        // 文字数による初期推定（ざっくり）
+        if(text.length > 14) size = 4.5;
+        else if(text.length > 10) size = 6.5;
+        else if(text.length > 7) size = 8;
         
         resultElement.style.fontSize = size + 'rem';
 
         if (isFinal) {
             setTimeout(() => {
+                const maxWidth = window.innerWidth * 0.95; // 画面の95%に収める
                 let currentSize = parseFloat(resultElement.style.fontSize);
                 let safety = 0;
-                // はみ出しチェックループ
-                while (resultElement.scrollWidth > maxW && currentSize > 1 && safety < 100) {
-                    currentSize -= 0.5;
+                
+                // はみ出している間は縮小し続ける (最小1remまで)
+                while (resultElement.scrollWidth > maxWidth && currentSize > 1 && safety < 50) {
+                    currentSize -= 0.2; // 0.2刻みで調整
                     resultElement.style.fontSize = currentSize + 'rem';
                     safety++;
                 }
@@ -584,11 +595,12 @@
       else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
       else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
       else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
-      else if (text === "SKRILLEX") { bgColor = 'white'; textColor = 'black'; }
+      else if (text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") { bgColor = 'white'; textColor = 'black'; }
       
       element.style.backgroundColor = bgColor; element.style.color = textColor;
       if (!isHistoryItem) { 
           element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; 
+          // フォントサイズはadjustFontSizeで管理
           element.style.borderRadius = '10px';
       }
       else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; element.style.borderRadius = '5px'; }
