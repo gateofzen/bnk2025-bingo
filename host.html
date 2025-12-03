@@ -36,13 +36,23 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
 
+    /* ★修正: 幅制限と中央寄せ */
     #result {
-      font-size: 9rem; font-weight: bold; margin-bottom: 10px;
-      display: inline-block; cursor: pointer;
+      font-size: 9rem; 
+      font-weight: bold; 
+      margin-bottom: 10px;
+      display: inline-block; 
+      cursor: pointer;
       text-shadow: 0 0 10px rgba(0,0,0,0.5);
-      min-height: 1.2em; line-height: 1.2; z-index: 10;
-      white-space: nowrap; 
-      transition: font-size 0.1s;
+      min-height: 1.2em; 
+      line-height: 1.2; 
+      z-index: 10;
+      
+      white-space: nowrap; /* 1行強制 */
+      max-width: 95vw;     /* 画面からはみ出さない */
+      overflow: visible;   /* 文字が切れないように */
+      
+      transition: font-size 0.1s ease;
     }
     #result:active { transform: scale(0.98); }
 
@@ -160,7 +170,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 44.0</div>
+  <div class="version-tag">Ver 45.0 (Fit Text)</div>
 
   <div class="admin-controls">
       <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
@@ -264,7 +274,6 @@
     let playersData = []; 
     let winnersData = []; 
     
-    // ★Ver 44.0: パス更新
     const PARTICIPANTS_PATH = 'bingo_game_final_v42';
     let initialWinnerKeys = new Set();
 
@@ -291,6 +300,7 @@
           if(savedHistory.length > 0) {
             const latest = savedHistory[0];
             resultElement.textContent = latest;
+            // ★初期表示時もサイズ調整
             adjustFontSize(latest);
             applyStyle(resultElement, latest);
             qrElement.style.display = 'none';
@@ -506,9 +516,11 @@
       }, 1300);
     }
 
+    // ★文字サイズ自動調整ロジック
     function adjustFontSize(text) {
+        // 長さに応じてサイズダウン
         if(text.length > 14) resultElement.style.fontSize = '5rem';
-        else if(text.length > 10) resultElement.style.fontSize = '7rem';
+        else if(text.length > 10) resultElement.style.fontSize = '6.5rem';
         else resultElement.style.fontSize = '9rem';
     }
 
@@ -557,8 +569,9 @@
       element.style.backgroundColor = bgColor; element.style.color = textColor;
       if (!isHistoryItem) { 
           element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; 
+          element.style.borderRadius = '10px';
       }
-      else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; }
+      else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; element.style.borderRadius = '5px'; }
     }
   </script>
 </body>
