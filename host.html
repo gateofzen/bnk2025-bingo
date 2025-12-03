@@ -15,19 +15,9 @@
       font-style: normal;
     }
 
-    /* ★修正: HTML全体に黒背景を指定 */
-    html {
-      background-color: black;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    /* ★修正: Bodyにも背景と画像を再指定 */
     body {
       font-family: 'BrotherXL', Arial, sans-serif;
       margin: 0; padding: 0;
-      width: 100%; height: 100%;
       background-color: black;
       background-image: url('./FC_logo.png');
       background-repeat: no-repeat;
@@ -35,9 +25,8 @@
       background-attachment: fixed;
       background-size: cover;
       display: flex; justify-content: center; align-items: center;
-      flex-direction: column; 
-      color: white;
-      position: relative;
+      flex-direction: column; height: 100vh; color: white;
+      position: relative; overflow: hidden;
     }
 
     .version-tag { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #888; z-index: 2000; font-family: sans-serif; }
@@ -183,7 +172,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 60.0</div>
+  <div class="version-tag">Ver 61.0</div>
 
   <div class="admin-controls">
       <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
@@ -231,7 +220,6 @@
       measurementId: "G-2LVWF4GVS5"
     };
 
-    // ★完全な候補リスト（ITS/ZEDD削除済み、BSW MRN5追加済み）
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -290,7 +278,6 @@
     let playersData = []; 
     let winnersData = []; 
     
-    // ★重要: Playerと一致させる
     const PARTICIPANTS_PATH = 'bingo_game_v60_final';
     let initialWinnerKeys = new Set();
 
@@ -385,6 +372,7 @@
       playerCounter.textContent = `PLAYERS: ${count}`;
     }
 
+    // ★修正: 参加者リスト表示ロジック (全員表示 & 同率順位)
     function showPlayerList() {
       const listContainer = document.getElementById('playerListContent');
       listContainer.innerHTML = "";
@@ -399,36 +387,51 @@
       if(total === 0) {
         listContainer.innerHTML = "<div style='color:#999; grid-column: 1 / -1;'>参加者はまだいません</div>";
       } else {
+        // 勝者リストの作成（タイムスタンプ順にソートされている前提）
+        // 同着（同じタイムスタンプ）を考慮した順位付け
+        let currentRank = 1;
         const winnerRankMap = {};
-        winnersData.forEach((w, index) => { winnerRankMap[w.name] = index + 1; });
-        let displayList = [];
-        const addedWinners = new Set();
-        winnersData.forEach((w) => {
-           if(!addedWinners.has(w.name)) {
-               addedWinners.add(w.name);
-               displayList.push({ name: w.name, rank: addedWinners.size, isWinner: true });
+        
+        // ソート済み winnersData を使用
+        for(let i=0; i < winnersData.length; i++) {
+           const w = winnersData[i];
+           // 前の人と同じタイムスタンプなら同順位、そうでなければ現在のインデックス+1
+           if (i > 0 && w.timestamp === winnersData[i-1].timestamp) {
+               // 順位据え置き
+           } else {
+               currentRank = i + 1;
            }
+           
+           // 同じ名前で複数登録されている場合は最初の順位を採用（通常ありえないが念のため）
+           if(!winnerRankMap[w.name]) {
+               winnerRankMap[w.name] = currentRank;
+           }
+        }
+
+        // 1. 勝者を表示（ランク順）
+        Object.keys(winnerRankMap).forEach(name => {
+             const rank = winnerRankMap[name];
+             const div = document.createElement('div');
+             div.className = `player-tile ${fontClass} is-winner`;
+             div.innerHTML = `<span>👑 No.${rank}<br>${name}</span>`;
+             listContainer.appendChild(div);
         });
+
+        // 2. まだの人を表示
         uniquePlayers.forEach(name => {
-           if(!winnerRankMap[name]) displayList.push({ name: name, rank: null, isWinner: false });
-        });
-        displayList.forEach(item => {
-          const div = document.createElement('div');
-          div.className = `player-tile ${fontClass}`;
-          if(item.isWinner) {
-             div.classList.add('is-winner');
-             div.innerHTML = `<span>👑 No.${item.rank}<br>${item.name}</span>`;
-          } else {
-             div.textContent = item.name;
-          }
-          listContainer.appendChild(div);
+           if(!winnerRankMap[name]) {
+             const div = document.createElement('div');
+             div.className = `player-tile ${fontClass}`;
+             div.textContent = name;
+             listContainer.appendChild(div);
+           }
         });
       }
       document.getElementById('playerListModal').style.display = 'flex';
     }
 
     function resetGame() {
-      if(!confirm("ゲームをリセットしますか？\n（参加者リストは残ります）")) return;
+      if(!confirm("ゲームをリセットしますか？\n（参加者リストとカードは維持されます）")) return;
       db.ref('gameState').remove();
       db.ref('winners').remove();
       qrElement.style.display = 'block';
@@ -533,17 +536,17 @@
     }
 
     function adjustFontSize(text) {
-        const maxW = window.innerWidth * 0.94;
+        const maxW = window.innerWidth * 0.95;
         let size = 9;
-        if (text.length > 14) size = 4.5;
-        else if (text.length > 10) size = 6.5;
-        else if (text.length > 7) size = 8;
+        if(text.length > 14) size = 5;
+        else if(text.length > 10) size = 6.5;
+        else if(text.length > 7) size = 8;
         resultElement.style.fontSize = size + "rem";
         setTimeout(() => {
             let currentSize = parseFloat(resultElement.style.fontSize);
             let safety = 0;
             while (resultElement.scrollWidth > maxW && currentSize > 1 && safety < 50) {
-                currentSize -= 0.2;
+                currentSize -= 0.5;
                 resultElement.style.fontSize = currentSize + 'rem';
                 safety++;
             }
