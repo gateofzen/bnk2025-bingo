@@ -29,18 +29,22 @@
       position: relative; overflow: hidden;
     }
 
-    .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
+    /* ★修正: 真ん中上に配置 */
+    .version-tag { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #888; z-index: 2000; font-family: sans-serif; }
 
     .container {
       text-align: center; width: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
 
+    /* ★修正: 1行表示・折り返し禁止 */
     #result {
       font-size: 9rem; font-weight: bold; margin-bottom: 10px;
       display: inline-block; cursor: pointer;
       text-shadow: 0 0 10px rgba(0,0,0,0.5);
       min-height: 1.2em; line-height: 1.2; z-index: 10;
+      white-space: nowrap; /* 折り返し禁止 */
+      transition: font-size 0.1s; /* スムーズにサイズ変更 */
     }
     #result:active { transform: scale(0.98); }
 
@@ -67,23 +71,25 @@
     }
     #linkButton:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
 
-    /* 通常リセットボタン */
-    #resetButton {
-      position: fixed; top: 20px; right: 20px;
-      background: rgba(0, 0, 0, 0.5); color: #aaa;
-      border: 1px solid #555; padding: 5px 10px;
-      font-size: 0.8rem; cursor: pointer; z-index: 1000;
+    /* ★修正: ボタンコンテナ（右上・横並び） */
+    .admin-controls {
+        position: fixed; top: 15px; right: 15px;
+        display: flex; gap: 8px; z-index: 1000;
     }
-    #resetButton:hover { background: #555; color: white; }
-
-    /* ★完全消去ボタン */
-    #fullResetButton {
-      position: fixed; top: 60px; right: 20px;
-      background: rgba(50, 0, 0, 0.8); color: #ffcccc;
-      border: 1px solid #aa0000; padding: 5px 10px;
-      font-size: 0.7rem; cursor: pointer; z-index: 1000;
+    /* ★修正: 目立たないボタンスタイル */
+    .admin-btn {
+        background: rgba(0,0,0,0.4); 
+        color: #666; 
+        border: 1px solid #444; 
+        padding: 6px 12px;
+        font-size: 0.7rem; 
+        cursor: pointer; 
+        border-radius: 4px;
+        transition: all 0.2s;
     }
-    #fullResetButton:hover { background: red; color: white; }
+    .admin-btn:hover { background: #333; color: white; border-color: #888; }
+    /* FULL WIPEはホバー時に赤くして警告 */
+    .btn-danger:hover { background: #500; color: #ffcccc; border-color: red; }
 
     #playerCounter {
       position: fixed; top: 20px; left: 20px;
@@ -159,11 +165,13 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 42.0 (Two Resets)</div>
+  <div class="version-tag">Ver 43.0</div>
 
-  <button id="resetButton" onclick="resetGame()">GAME RESET</button>
-  <button id="fullResetButton" onclick="resetAllData()">⚠ FULL WIPE</button>
-  
+  <div class="admin-controls">
+      <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
+      <button class="admin-btn btn-danger" onclick="resetAllData()">FULL WIPE</button>
+  </div>
+
   <div id="playerCounter" onclick="showPlayerList()">PLAYERS: 0</div>
   
   <div id="testTrigger" onclick="runTestMode()"></div>
@@ -203,7 +211,6 @@
       measurementId: "G-2LVWF4GVS5"
     };
 
-    // candidatesリスト（省略）
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -262,7 +269,6 @@
     let playersData = []; 
     let winnersData = []; 
     
-    // ★重要: パス更新
     const PARTICIPANTS_PATH = 'bingo_game_final_v42';
     let initialWinnerKeys = new Set();
 
@@ -398,17 +404,16 @@
       document.getElementById('playerListModal').style.display = 'flex';
     }
 
-    // 1. ゲームだけリセット (参加者は残る)
+    // 1. ゲームだけリセット
     function resetGame() {
       if(!confirm("ゲームをリセットしますか？\n（参加者リストとカードは維持されます）")) return;
       db.ref('gameState').remove();
       db.ref('winners').remove();
-      // db.ref(PARTICIPANTS_PATH).remove(); // 消さない
       qrElement.style.display = 'block';
       location.reload();
     }
 
-    // 2. 完全リセット (参加者も消す)
+    // 2. 完全リセット
     function resetAllData() {
       if(!confirm("⚠ DANGER ⚠\n参加者リストも含めて全て強制消去します。\n本当に実行しますか？")) return;
       db.ref('gameState').remove();
@@ -489,19 +494,29 @@
 
       animationInterval = setInterval(() => {
         const temp = availableCandidates[Math.floor(Math.random() * availableCandidates.length)] || finalResult;
+        // ★修正: フォントサイズ自動調整
         resultElement.textContent = temp;
+        adjustFontSize(temp);
         applyStyle(resultElement, temp);
       }, 100);
 
       setTimeout(() => {
         clearInterval(animationInterval);
         resultElement.textContent = finalResult;
+        adjustFontSize(finalResult);
         applyStyle(resultElement, finalResult);
         addToHistoryUI(finalResult);
         updateFirebase(finalResult);
         isAnimating = false;
         if (availableCandidates.length === 0) setTimeout(() => alert("全てのプログラムが終了しました！"), 1000);
       }, 1300);
+    }
+
+    // ★追加: 文字数によるフォントサイズ調整関数
+    function adjustFontSize(text) {
+        if(text.length > 14) resultElement.style.fontSize = '5rem';
+        else if(text.length > 10) resultElement.style.fontSize = '7rem';
+        else resultElement.style.fontSize = '9rem';
     }
 
     function updateFirebase(result) {
@@ -547,7 +562,10 @@
       else if (text === "SKRILLEX" || text.startsWith("ITS") || text === "ZEDD MIX") { bgColor = 'white'; textColor = 'black'; }
       
       element.style.backgroundColor = bgColor; element.style.color = textColor;
-      if (!isHistoryItem) { element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; }
+      if (!isHistoryItem) { 
+          element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; 
+          // ★フォントサイズはJSで制御するのでここでは指定しない
+      }
       else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; }
     }
   </script>
