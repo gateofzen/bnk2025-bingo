@@ -31,6 +31,7 @@
       touch-action: none; 
     }
 
+    /* ★修正: バージョン表示シンプル化 */
     .version-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #aaa; z-index: 2000; font-family: sans-serif; }
 
     #loginScreen { 
@@ -68,7 +69,6 @@
       margin: 10px auto 100px auto;
     }
 
-    /* ★修正: 1行表示に戻し、サイズ調整 */
     .bingo-cell {
       background: rgba(34, 34, 34, 0.9); 
       border: 1px solid #444; 
@@ -77,18 +77,12 @@
       height: 100%;
       display: flex; 
       justify-content: center; 
-      align-items: center;
-      
-      /* スマホ・タブレット両対応のサイズ感 */
-      font-size: clamp(9px, 2.8vw, 13px);
+      align-items: center;     
+      font-size: clamp(11px, 3.5vw, 14px); 
       font-weight: bold; 
       line-height: 1.1;
       text-align: center; 
-      
-      /* 改行禁止 */
-      white-space: nowrap;
-      overflow: hidden; /* はみ出た分は隠す（基本clampで収まる想定） */
-      
+      word-break: break-word; 
       padding: 2px; 
       cursor: pointer; 
       user-select: none; 
@@ -208,7 +202,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 47.0 (No Wrap)</div>
+  <div class="version-tag">Ver 50.0</div>
 
   <div id="loginScreen">
     <h2 style="color:#FF9933; margin-bottom:40px; letter-spacing:2px;">BINGO ENTRY</h2>
@@ -260,7 +254,6 @@
       measurementId: "G-2LVWF4GVS5"
     };
     
-    // 候補リストは省略（Ver46と同じ）
     const candidates = [
       "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 BRIT 2024", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 DVGT", "BB1 GRMY 65", "BB1 GRMY 67",
       "BB1 Hit 1", "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10", "BB1 Hit 11",
@@ -306,7 +299,7 @@
     let gameStarted = false; 
     let sessionId = null;
     
-    const PARTICIPANTS_PATH = 'bingo_game_final_v42';
+    const PARTICIPANTS_PATH = 'bingo_game_final_v42'; // Ver42
     
     const STORAGE_KEY_ID = 'bingo_user_id_v42';
     const STORAGE_KEY_NAME = 'bingo_player_name_v42';
@@ -331,6 +324,7 @@
           playerName = savedName;
           myCard = JSON.parse(savedCard);
           sessionId = getDeviceId();
+          
           document.getElementById('playerName').value = playerName;
           startGame(true); 
           renderGrid();
