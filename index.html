@@ -17,14 +17,10 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    html, body { 
-      height: 100%; 
-      overflow: hidden; 
-      overscroll-behavior-y: none; 
-      background-color: black; /* 念のためここにも指定 */
-    }
+    html, body { height: 100%; overflow: hidden; overscroll-behavior-y: none; }
 
     body { 
+      background-color: black; 
       background-image: url('./FC_logo.png');
       background-repeat: no-repeat;
       background-position: center center;
@@ -79,7 +75,6 @@
       width: 100%; height: 100%;
       display: flex; justify-content: center; align-items: center;
       
-      /* 2行表示許可 */
       font-size: clamp(11px, 3.5vw, 14px); 
       font-weight: bold; 
       line-height: 1.2;
@@ -200,10 +195,8 @@
     }
     .footer-btn:hover { background: #331111; color: red; }
 
-    /* LINEブラウザ警告 */
     #lineWarning {
-      display: none; 
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: #111; z-index: 9999;
       flex-direction: column; justify-content: center; align-items: center;
       text-align: center; padding: 20px; color: white;
@@ -219,13 +212,13 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 60.0</div>
+  <div class="version-tag">Ver 62.0 (BSB HH 1 Added)</div>
 
   <div id="lineWarning">
     <div class="warning-icon">⚠️</div>
     <div class="warning-title">外部ブラウザで開いてください</div>
     <div class="warning-text">
-      LINE内のブラウザでは正常に動作しない可能性があります。<br><br>
+      LINE内のブラウザでは動作しません。<br><br>
       右下のメニューから<br>
       <span style="color:#DEFF66; font-weight:bold;">「デフォルトのブラウザで開く」</span><br>
       を選択してください。
@@ -272,7 +265,6 @@
   </div>
 
   <script>
-    // LINE検知
     document.addEventListener('DOMContentLoaded', function() {
       var ua = navigator.userAgent.toLowerCase();
       if (ua.indexOf('line') > -1 && (ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1)) {
@@ -323,8 +315,11 @@
       "BSL Hous 1", "BSL Hous 2", "BSL R&B 1", "BSL Rock 1",
       "BSW 10s 1", "BSW Comp 1", "BSW Comp 2", "BSW Comp 3", "BSW Hit 1", "BSW Hit 2", "BSW Hit 3", "BSW Hit 4", "BSW Hit 5", "BSW Hit 6", "BSW Hit 7", "BSW Hit 8",
       "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW MRN5", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
-      "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
+      // ★追加: BSB HH 1 を追加
+      "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1", "BSB HH 1"
     ];
+    // アルファベット順にするためソート
+    candidates.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -338,7 +333,10 @@
     let gameStarted = false; 
     let sessionId = null;
     
+    // ★重要: パスは変更しない (参加者データを引き継ぐため)
     const PARTICIPANTS_PATH = 'bingo_game_v60_final';
+    
+    // ★重要: ストレージキーも変更しない
     const STORAGE_KEY_ID = 'bingo_user_id_v60';
     const STORAGE_KEY_NAME = 'bingo_player_name_v60';
     const STORAGE_KEY_CARD = 'bingo_player_card_v60';
@@ -362,6 +360,7 @@
           playerName = savedName;
           myCard = JSON.parse(savedCard);
           sessionId = getDeviceId();
+          
           document.getElementById('playerName').value = playerName;
           startGame(true); 
           renderGrid();
@@ -469,9 +468,11 @@
     function exitAndClear() {
       if(!confirm("ビンゴカードを破棄して退出しますか？\n（データは完全に消去されます）")) return;
       
-      // ホスト側でユニークカウントしているので、DB削除は必須ではないが
-      // 念のため自分に関連するエントリを削除するロジックを入れるのは複雑になるため
-      // ここではローカル削除のみでリロードする（再参加で別IDになるため問題なし）
+      // DBから削除（ベストエフォート）
+      // ホスト側で名前ユニークカウントしているので、ここは必須ではないが念のため
+      // ただしpush方式なので自分のキーがわからないため、ここではローカル削除のみとする
+      // （ホスト側で「RESET」すれば全員消えるため問題なし）
+
       localStorage.removeItem(STORAGE_KEY_NAME);
       localStorage.removeItem(STORAGE_KEY_CARD);
       localStorage.removeItem(STORAGE_KEY_ID);
@@ -481,6 +482,7 @@
 
     function randomFill() {
       if(gameStarted) return; 
+      // candidatesはソート済みなのでそのまま使う
       const pool = [...candidates];
       for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -559,7 +561,8 @@
         return prog.startsWith(genre);
       });
       
-      filtered.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+      // ソート済みのcandidatesを使っているのでここではソート不要だが念のため
+      // filtered.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
 
       filtered.forEach(prog => {
         const div = document.createElement('div');
@@ -610,6 +613,7 @@
           if(drawnHistory.includes(text)) {
             hits[i] = true;
             cell.classList.add('hit');
+            cell.style.opacity = "1"; 
           }
         } else {
           cell.innerHTML = "<span style='color:#999'>TAP</span>";
@@ -634,6 +638,7 @@
         isBingo = true;
         db.ref('winners').push({ name: playerName, id: sessionId, timestamp: Date.now() });
         document.getElementById('myBingoModal').style.display = 'flex';
+        db.ref('gameState/history').off();
       }
     }
 
