@@ -172,7 +172,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">Ver 61.0</div>
+  <div class="version-tag">Ver 62.0 (BSB HH 1 Added)</div>
 
   <div class="admin-controls">
       <button class="admin-btn" onclick="resetGame()">GAME RESET</button>
@@ -252,6 +252,9 @@
       "BSW Hous 1", "BSW Hous 2", "BSW Hous 3", "BSW Jazz 1", "BSW L&S", "BSW MRN5", "BSW R&B 1", "BSW Regg 1", "BSW Rock 1", "BSW Soul 1",
       "BSWi BMLY", "BSWi HH 1", "BSWi Hous 1", "BSWi Hous 2", "BSWi Hous 3", "BSWi Hous 4", "BSWi Metal 1"
     ];
+    
+    // ソートしてBSB HH 1を正しい位置へ
+    candidates.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
 
     function hideModal(id) {
       document.getElementById(id).style.display = 'none';
@@ -372,7 +375,6 @@
       playerCounter.textContent = `PLAYERS: ${count}`;
     }
 
-    // ★修正: 参加者リスト表示ロジック (全員表示 & 同率順位)
     function showPlayerList() {
       const listContainer = document.getElementById('playerListContent');
       listContainer.innerHTML = "";
@@ -387,44 +389,29 @@
       if(total === 0) {
         listContainer.innerHTML = "<div style='color:#999; grid-column: 1 / -1;'>参加者はまだいません</div>";
       } else {
-        // 勝者リストの作成（タイムスタンプ順にソートされている前提）
-        // 同着（同じタイムスタンプ）を考慮した順位付け
-        let currentRank = 1;
         const winnerRankMap = {};
-        
-        // ソート済み winnersData を使用
-        for(let i=0; i < winnersData.length; i++) {
-           const w = winnersData[i];
-           // 前の人と同じタイムスタンプなら同順位、そうでなければ現在のインデックス+1
-           if (i > 0 && w.timestamp === winnersData[i-1].timestamp) {
-               // 順位据え置き
-           } else {
-               currentRank = i + 1;
+        winnersData.forEach((w, index) => { winnerRankMap[w.name] = index + 1; });
+        let displayList = [];
+        const addedWinners = new Set();
+        winnersData.forEach((w) => {
+           if(!addedWinners.has(w.name)) {
+               addedWinners.add(w.name);
+               displayList.push({ name: w.name, rank: addedWinners.size, isWinner: true });
            }
-           
-           // 同じ名前で複数登録されている場合は最初の順位を採用（通常ありえないが念のため）
-           if(!winnerRankMap[w.name]) {
-               winnerRankMap[w.name] = currentRank;
-           }
-        }
-
-        // 1. 勝者を表示（ランク順）
-        Object.keys(winnerRankMap).forEach(name => {
-             const rank = winnerRankMap[name];
-             const div = document.createElement('div');
-             div.className = `player-tile ${fontClass} is-winner`;
-             div.innerHTML = `<span>👑 No.${rank}<br>${name}</span>`;
-             listContainer.appendChild(div);
         });
-
-        // 2. まだの人を表示
         uniquePlayers.forEach(name => {
-           if(!winnerRankMap[name]) {
-             const div = document.createElement('div');
-             div.className = `player-tile ${fontClass}`;
-             div.textContent = name;
-             listContainer.appendChild(div);
-           }
+           if(!winnerRankMap[name]) displayList.push({ name: name, rank: null, isWinner: false });
+        });
+        displayList.forEach(item => {
+          const div = document.createElement('div');
+          div.className = `player-tile ${fontClass}`;
+          if(item.isWinner) {
+             div.classList.add('is-winner');
+             div.innerHTML = `<span>👑 No.${item.rank}<br>${item.name}</span>`;
+          } else {
+             div.textContent = item.name;
+          }
+          listContainer.appendChild(div);
         });
       }
       document.getElementById('playerListModal').style.display = 'flex';
@@ -538,7 +525,7 @@
     function adjustFontSize(text) {
         const maxW = window.innerWidth * 0.95;
         let size = 9;
-        if(text.length > 14) size = 5;
+        if(text.length > 14) size = 4.5;
         else if(text.length > 10) size = 6.5;
         else if(text.length > 7) size = 8;
         resultElement.style.fontSize = size + "rem";
