@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>BNK2025 - REMOTE</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    @font-face { font-family: 'BrotherXL'; src: url('./fonts/Brother_XL_Regular.otf') format('opentype'); }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0; min-height: 100vh; min-height: 100dvh;
+      background: #111; color: white;
+      font-family: 'BrotherXL', Arial, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px; padding-top: max(16px, env(safe-area-inset-top));
+      text-align: center;
+    }
+    #status { font-family: Arial, sans-serif; font-size: 0.9rem; padding: 6px 14px; border-radius: 999px; background: #333; margin-bottom: 16px; }
+    #status.ok { background: #1f7a3f; }
+    #status.ng { background: #8a1f1f; }
+    #resultArea { min-height: 110px; display: flex; align-items: center; justify-content: center; width: 100%; }
+    #result { display: inline-block; font-size: 2.2rem; font-weight: bold; word-break: break-word; max-width: 100%; }
+    #result.drawing { animation: pulse 0.5s ease-in-out infinite alternate; }
+    @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+    #remaining { font-family: Arial, sans-serif; color: #aaa; margin: 10px 0 18px; }
+    #drawButton {
+      width: 180px; height: 180px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.08);
+      color: white; font-family: 'BrotherXL', Arial, sans-serif; font-size: 1.8rem;
+      touch-action: manipulation;
+    }
+    #drawButton:active:not(:disabled) { transform: scale(0.95); background: rgba(255,255,255,0.2); }
+    #drawButton:disabled { opacity: 0.3; }
+    #historyTitle { margin-top: 26px; color: #aaa; font-size: 0.9rem; }
+    #historyList { list-style: none; padding: 0; margin: 8px 0 0; }
+    #historyList li { font-size: 1.1rem; }
+    #cardLink { margin-top: 28px; color: #888; font-family: Arial, sans-serif; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div id="status">CONNECTING...</div>
+  <div id="resultArea"><span id="result"></span></div>
+  <div id="remaining"></div>
+  <button id="drawButton" disabled>DRAW</button>
+  <div id="historyTitle">Past Results:</div>
+  <ul id="historyList"></ul>
+  <a id="cardLink" href="./index.html" target="_blank">自分のビンゴカードを開く</a>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDNPT6qv47ku9PBYLm_9FDl-hY0sQqZHn8",
+      authDomain: "bnk2025-bingo.firebaseapp.com",
+      databaseURL: "https://bnk2025-bingo-default-rtdb.firebaseio.com",
+      projectId: "bnk2025-bingo",
+      storageBucket: "bnk2025-bingo.firebasestorage.app",
+      messagingSenderId: "127094139624",
+      appId: "1:127094139624:web:703cf76da95ba05154b75d",
+      measurementId: "G-2LVWF4GVS5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
+    const remainingEl = document.getElementById('remaining');
+    const drawButton = document.getElementById('drawButton');
+    const historyList = document.getElementById('historyList');
+
+    let connected = false;
+    let host = null;
+    let history = [];
+    let waiting = false; // 押した直後〜抽選開始までの二度押し防止
+
+    function render() {
+      if (!connected) {
+        statusEl.textContent = 'OFFLINE'; statusEl.className = 'ng';
+      } else if (!host || !host.online) {
+        statusEl.textContent = 'HOST (TABLET) NOT FOUND'; statusEl.className = 'ng';
+      } else {
+        statusEl.textContent = 'READY'; statusEl.className = 'ok';
+      }
+
+      const drawing = !!(host && host.drawing);
+      if (drawing) {
+        resultEl.textContent = 'DRAWING...';
+        applyStyle(resultEl, '');
+        resultEl.className = 'drawing';
+      } else {
+        const latest = history[0] || '';
+        resultEl.textContent = latest;
+        applyStyle(resultEl, latest);
+        resultEl.className = '';
+      }
+      resultEl.style.cursor = 'default';
+
+      if (host && typeof host.remaining === 'number') {
+        remainingEl.textContent = host.remaining === 0 ? 'ALL COMPLETED' : 'Remaining: ' + host.remaining + ' / ' + host.total;
+      }
+
+      historyList.innerHTML = '';
+      history.slice(0, 5).forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        applyStyle(li, item, true);
+        historyList.appendChild(li);
+      });
+
+      const canDraw = connected && host && host.online && !drawing && !waiting && host.remaining !== 0;
+      drawButton.disabled = !canDraw;
+    }
+
+    db.ref('.info/connected').on('value', s => { connected = s.val() === true; render(); });
+    db.ref('remote/host').on('value', s => {
+      host = s.val();
+      if (host && host.drawing) waiting = false;
+      render();
+    });
+    db.ref('gameState/history').on('value', s => {
+      history = s.val() || [];
+      waiting = false;
+      render();
+    });
+
+    drawButton.addEventListener('click', () => {
+      if (drawButton.disabled) return;
+      waiting = true;
+      render();
+      db.ref('remote/drawRequest').set({
+        id: Math.random().toString(36).slice(2),
+        at: firebase.database.ServerValue.TIMESTAMP
+      });
+      // 応答がなければ5秒後に再び押せるようにする
+      setTimeout(() => { waiting = false; render(); }, 5000);
+    });
+
+    function applyStyle(element, text, isHistoryItem = false) {
+      element.removeAttribute('style'); element.removeAttribute('class');
+      let bgColor = 'transparent'; let textColor = 'white';
+      if (text.startsWith("BB1")) { bgColor = '#FFFF00'; textColor = 'black'; }
+      else if (text.startsWith("BB2")) { bgColor = '#FF9933'; textColor = 'black'; }
+      else if (text.startsWith("BB3")) { bgColor = '#FF3300'; textColor = 'black'; }
+      else if (text.startsWith("BSBi")) { bgColor = '#336699'; textColor = '#DEFF66'; }
+      else if (text.startsWith("BSB")) { bgColor = '#00CCFF'; textColor = 'black'; }
+      else if (text.startsWith("BSWi")) { bgColor = '#990099'; textColor = '#FFEF7F'; }
+      else if (text.startsWith("BSW")) { bgColor = '#CC66FF'; textColor = 'white'; }
+      else if (text.startsWith("BSL")) { bgColor = '#0000CC'; textColor = 'white'; }
+      else if (text.includes("FEEL NOW G")) { bgColor = '#B08A3A'; textColor = 'white'; }
+      else if (text.includes("FEEL NOW S")) { bgColor = '#666666'; textColor = 'white'; }
+      else if (text.includes("FEEL NOW B")) { bgColor = '#00121C'; textColor = 'white'; }
+      else if (text.includes("FEEL HIGH")) { bgColor = 'white'; textColor = 'black'; }
+      else if (text.includes("FEEL DEEP")) { bgColor = 'white'; textColor = 'black'; }
+      else if (text.includes("BTM")) { bgColor = '#00121C'; textColor = '#BD3EA4'; }
+      else if (text.includes("FREE")) { bgColor = '#00121C'; textColor = '#D61C1C'; }
+      else if (text.startsWith("FEEL NOW")) { bgColor = '#00121C'; textColor = 'white'; }
+      else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
+      else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
+      else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
+      else if (text === "SKRILLEX") { bgColor = 'white'; textColor = 'black'; }
+      
+      element.style.backgroundColor = bgColor; element.style.color = textColor;
+      if (!isHistoryItem) { 
+          element.style.padding = '20px 40px'; element.style.cursor = 'pointer'; 
+          element.style.borderRadius = '15px';
+      }
+      else { element.style.padding = '5px 15px'; element.style.display = 'inline-block'; element.style.margin = '3px'; element.style.borderRadius = '5px'; }
+    }
+  </script>
+</body>
+</html>
