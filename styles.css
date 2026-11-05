@@ -4,75 +4,100 @@
   font-weight: normal;
   font-style: normal;
 }
+
 body {
-  font-family: 'BrotherXL', Arial, sans-serif;
+  font-family: 'BrotherXL', Arial, sans-serif; /* BrotherXLフォントを適用 */
   margin: 0;
   padding: 0;
-  background: url('./FC_logo.png') no-repeat center center fixed;
-  background-size: cover;
+  background: url('./FC_logo.png') no-repeat center center fixed; /* 背景画像を設定 */
+  background-size: cover; /* 画面全体に合わせて拡大縮小 */
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
+  flex-direction: column; /* 上から下に配置 */
   height: 100vh;
-  color: white;
-  position: relative;
+  color: white; /* テキストを白に設定 */
 }
+
 .container {
   text-align: center;
 }
+
 #result {
-  font-size: 9rem;
-  font-weight: bold;
-  margin-bottom: 50px;
-  display: inline-block;
+  font-size: 9rem; /* 150%に拡大済みの文字サイズ */
+  font-weight: bold; /* 文字を太字に */
+  margin-bottom: 50px; /* ボタンとの間隔を広げる */
+  display: inline-block; /* 帯の幅を文字に合わせるため */
+  transition: all 0.3s ease; /* 色変更時のトランジション */
 }
+
 #drawButton {
   width: 80px;
   height: 80px;
-  background: transparent;
+  background: transparent; /* 背景を透明に（黒抜き） */
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
+  border-radius: 50%; /* 円形のボタン */
   cursor: pointer;
   outline: none;
   box-shadow: none;
   transition: all 0.3s ease;
 }
+
 #drawButton:hover {
   border-color: rgba(255, 255, 255, 0.6);
   transform: scale(1.1);
 }
+
 #historyContainer {
   margin-top: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 30px; /* ボタンとの間隔 */
   font-size: 2.1rem;
   text-align: center;
 }
+
 #historyList {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 #historyList li {
+  transition: all 0.3s ease;
   margin: 3px;
 }
 
-#linkButton {
+/* ===== リモコン接続表示 ===== */
+#statusDot {
   position: fixed;
-  left: 30px;
-  bottom: 30px;
-  width: 80px;
-  height: 80px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  top: 12px;
+  right: 12px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  z-index: 1000;
-  display: block;
+  opacity: 0.6;
+  border: 6px solid transparent; /* タップしやすいように当たり判定を広げる */
+  background-clip: padding-box;
+}
+#statusDot.connected { background-color: #33cc66; }
+#statusDot.waiting   { background-color: #ffcc00; }
+#statusDot.offline   { background-color: #888888; }
+
+#remotePanel {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  padding: 12px;
+  background: white;
+  color: black;
+  border-radius: 8px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
 }
 
-#linkButton:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+#qrBox img,
+#qrBox canvas {
+  display: block;
+  margin: 0 auto 8px;
 }
