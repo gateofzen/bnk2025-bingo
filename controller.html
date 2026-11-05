@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>BNK2025-BINGO Remote</title>
+  <style>
+    @font-face {
+      font-family: 'BrotherXL';
+      src: url('./fonts/Brother_XL_Regular.otf') format('opentype');
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: #111;
+      color: white;
+      font-family: 'BrotherXL', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      text-align: center;
+    }
+    #status {
+      font-family: Arial, sans-serif;
+      font-size: 0.9rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: #333;
+      margin-bottom: 20px;
+    }
+    #status.connected { background: #1f7a3f; }
+    #status.error { background: #8a1f1f; }
+    #resultArea {
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    #result {
+      display: inline-block;
+      font-size: 2.4rem;
+      font-weight: bold;
+      word-break: break-word;
+      max-width: 100%;
+    }
+    #result.drawing { animation: pulse 0.6s ease-in-out infinite alternate; }
+    @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+    #remaining {
+      font-family: Arial, sans-serif;
+      color: #aaa;
+      margin: 12px 0 20px;
+    }
+    #drawButton {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      font-family: 'BrotherXL', Arial, sans-serif;
+      font-size: 1.8rem;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    #drawButton:active:not(:disabled) { transform: scale(0.95); background: rgba(255, 255, 255, 0.2); }
+    #drawButton:disabled { opacity: 0.3; }
+    #historyTitle { margin-top: 28px; color: #aaa; }
+    #historyList { list-style: none; padding: 0; margin: 8px 0 0; }
+    #historyList li {
+      display: inline-block;
+      margin: 3px;
+      font-size: 1.1rem;
+    }
+    #resetButton {
+      margin-top: auto;
+      padding: 10px 18px;
+      background: transparent;
+      color: #888;
+      border: 1px solid #555;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Connecting...</div>
+  <div id="resultArea"><span id="result"></span></div>
+  <div id="remaining"></div>
+  <button id="drawButton" disabled>DRAW</button>
+  <div id="historyTitle">Past Results:</div>
+  <ul id="historyList"></ul>
+  <div style="height: 32px;"></div>
+  <button id="resetButton" disabled>Reset all</button>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="common.js"></script>
+  <script src="controller.js"></script>
+</body>
+</html>
