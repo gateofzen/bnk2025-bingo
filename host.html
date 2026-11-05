@@ -314,6 +314,8 @@
             qrElement.style.display = 'block';
           }
         }
+        // 過去の結果を読み込んでからリモコンを受け付ける（重複抽選の防止）
+        setupRemote();
       });
 
       db.ref(PARTICIPANTS_PATH).on('value', snap => {
@@ -347,6 +349,32 @@
           });
       });
     };
+
+    // ===== 司会者スマホ（remote.html）からの操作 =====
+    function setHostStatus() {
+      db.ref('remote/host').update({
+        online: true,
+        drawing: isAnimating,
+        remaining: availableCandidates.length,
+        total: candidates.length
+      });
+    }
+
+    function setupRemote() {
+      db.ref('.info/connected').on('value', snap => {
+        if (snap.val() === true) {
+          db.ref('remote/host/online').onDisconnect().set(false);
+          setHostStatus();
+        }
+      });
+
+      // 起動時に残っている古いリクエストは無視し、その後の変化だけで抽選する
+      let remoteReady = false;
+      db.ref('remote/drawRequest').on('value', snap => {
+        if (!remoteReady) { remoteReady = true; return; }
+        if (snap.val()) performDraw();
+      });
+    }
 
     function runTestMode() {
         if(!confirm("テストモードを開始しますか？")) return;
@@ -502,6 +530,7 @@
       qrElement.style.display = 'none';
       isAnimating = true;
       const finalResult = drawRandomCandidate();
+      setHostStatus();
 
       animationInterval = setInterval(() => {
         const temp = availableCandidates[Math.floor(Math.random() * availableCandidates.length)] || finalResult;
@@ -518,7 +547,15 @@
         addToHistoryUI(finalResult);
         updateFirebase(finalResult);
         isAnimating = false;
-        if (availableCandidates.length === 0) setTimeout(() => alert("全てのプログラムが終了しました！"), 1000);
+        setHostStatus();
+        // 最後の1つ：alertだとタブレットの操作が必要になるので画面表示にする
+        if (availableCandidates.length === 0) {
+          setTimeout(() => {
+            resultElement.textContent = "FINAL: " + finalResult + " - ALL COMPLETED!";
+            adjustFontSize(resultElement.textContent);
+            applyStyle(resultElement, finalResult);
+          }, 2000);
+        }
       }, 1300);
     }
 
