@@ -1,24 +1,5 @@
-// common.js
+// ===== 表示画面・リモコン共通 =====
 
-// ★あなたのFirebase設定
-const firebaseConfig = {
-  apiKey: "AIzaSyDNPT6qv47ku9PBYLm_9FDl-hY0sQqZHn8",
-  authDomain: "bnk2025-bingo.firebaseapp.com",
-  databaseURL: "https://bnk2025-bingo-default-rtdb.firebaseio.com",
-  projectId: "bnk2025-bingo",
-  storageBucket: "bnk2025-bingo.firebasestorage.app",
-  messagingSenderId: "127094139624",
-  appId: "1:127094139624:web:703cf76da95ba05154b75d",
-  measurementId: "G-2LVWF4GVS5"
-};
-
-// Firebase初期化
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.database();
-
-// プログラムリスト
 const candidates = [
     "BB1 10s 1", "BB1 10s 2", "BB1 90s 1", "BB1 Comp 1", "BB1 Comp 2", "BB1 Comp 3", "BB1 Comp 4", "BB1 Hit 1",
     "BB1 Hit 2", "BB1 Hit 3", "BB1 Hit 4", "BB1 Hit 5", "BB1 Hit 6", "BB1 Hit 7", "BB1 Hit 8", "BB1 Hit 9", "BB1 Hit 10",
@@ -50,50 +31,48 @@ const candidates = [
     "FEEL NOW B3", "FEEL NOW B2", "FEEL NOW B1", "FEEL NOW S1", "FEEL NOW S2", "FEEL NOW S3", "FEEL NOW G1", "FEEL NOW G2", "FEEL NOW G3",
     "BB2 Hous 6", "BSW 10s 1", "BB2 GRMY 66", "L 24 FEEL", "L 24 FREE", "BB1 BRIT 2024", "BB2 Dua Lipa 2", "BSWi BMLY",
     "BSBi BMLY", "BB1 Hous 3", "BB3 Hous 4", "BB1 NOW 1", "BSL Deep 3", "BB2 10s 3", "L 24 FREE 2", "L 24 FEEL 2",
-    "BB1 Hous 4", "BB2 Xmas 4", "BB2 CHARLI", "BB2 RDMC", "BB2 RHCP", "BB2 JMCF", "BB2 Jeff Beck", "BB2 SIGALA", 
+    "BB1 Hous 4", "BB2 Xmas 4", "BB2 CHARLI", "BB2 RDMC", "BB2 RHCP", "BB2 JMCL", "BB2 Jeff Beck", "BB2 SIGALA",
     "BB2 CSBW 2", "BB2 NOW 1", "BSW L&S", "BB1 GRMY 67", "BB2 BRIT 2025", "BB2 LDGG 2", "BB2 NOW 2", "BB2 10s 4", "BSL Deep 4",
     "BSW Hous 3", "BB2 Hous 7", "BSB HH 2", "L 25 FEEL", "L 25 FREE", "BSWi Hous 4", "L 25 BTM", "BB3 10s 1", "BB1 NOW 2",
-    "BSBi Deep 1", "BB2 Comp 7", "BB1 Hous 5", "BSL R&B 1",
+    "BSBi Deep 1", "ITS 1", "ITS 2", "ITS 3",
 ];
 
-// スタイル適用関数
-function applyStyle(element, text, isHistoryItem = false) {
-  element.removeAttribute('style');
-  element.removeAttribute('class');
-  
-  let bgColor = '';
-  let textColor = '';
-  
-  if (text.substring(0, 3) === "BB1") { bgColor = '#FFFF00'; textColor = 'black'; }
-  else if (text.substring(0, 3) === "BB2") { bgColor = '#FF9933'; textColor = 'black'; }
-  else if (text.substring(0, 3) === "BB3") { bgColor = '#FF3300'; textColor = 'black'; }
-  else if (text.startsWith("BSBi")) { bgColor = '#336699'; textColor = '#DEFF66'; }
-  else if (text.startsWith("BSB")) { bgColor = '#00CCFF'; textColor = 'black'; }
-  else if (text.startsWith("BSWi")) { bgColor = '#990099'; textColor = '#FFEF7F'; }
-  else if (text.startsWith("BSW")) { bgColor = '#CC66FF'; textColor = 'white'; }
-  else if (text.startsWith("BSL")) { bgColor = '#0000CC'; textColor = 'white'; }
-  else if (text.includes("FEEL NOW G")) { bgColor = '#B08A3A'; textColor = 'white'; }
-  else if (text.includes("FEEL NOW S")) { bgColor = '#666666'; textColor = 'white'; }
-  else if (text.includes("FEEL NOW B")) { bgColor = '#00121C'; textColor = 'white'; }
-  else if (text.includes("FEEL HIGH")) { bgColor = 'white'; textColor = 'black'; }
-  else if (text.includes("FEEL DEEP")) { bgColor = 'white'; textColor = 'black'; }
-  else if (text.includes("BTM")) { bgColor = '#00121C'; textColor = '#BD3EA4'; }
-  else if (text.includes("FREE")) { bgColor = '#00121C'; textColor = '#D61C1C'; }
-  else if (text.includes("FEEL")) { bgColor = '#00121C'; textColor = '#0761F1'; }
-  else if (text.includes("SP")) { bgColor = '#00121C'; textColor = 'white'; }
-  else if (text === "BEERCYCLE") { bgColor = '#7A3202'; textColor = 'white'; }
-  else if (text === "SKRILLEX") { bgColor = 'white'; textColor = 'black'; }
-  else { bgColor = 'transparent'; textColor = 'white'; }
+// 色ルール（上から順に判定。先に一致したものが優先）
+// [含む文字列, 帯の色, 文字の色]
+const STYLE_RULES = [
+  ["FEEL NOW G", "#B08A3A", "white"],
+  ["FEEL NOW S", "#666666", "white"],
+  ["FEEL NOW B", "#00121C", "white"],
+  ["FEEL HIGH",  "white",   "black"],
+  ["FEEL DEEP",  "white",   "black"],
+  ["ITS",        "black",   "white"],
+  ["BEERCYCLE",  "#7A3202", "white"],
+  ["SKRILLEX",   "white",   "black"],
+  ["BTM",        "#00121C", "#BD3EA4"],
+  ["FREE",       "#00121C", "#D61C1C"],
+  ["FEEL",       "#00121C", "#0761F1"],
+  ["SP",         "#00121C", "white"],
+  ["BSBi",       "#336699", "#DEFF66"],
+  ["BSB",        "#00CCFF", "black"],
+  ["BSWi",       "#990099", "#FFEF7F"],
+  ["BSW",        "#CC66FF", "white"],
+  ["BSL",        "#0000CC", "white"],
+  ["BB3",        "#FF3300", "black"],
+  ["BB2",        "#FF9933", "black"],
+  ["BB1",        "#FFFF66", "black"],
+];
 
-  if (!isHistoryItem) {
-    element.style.padding = '20px 40px';
-    element.style.cursor = 'pointer';
-  } else {
-    element.style.padding = '5px 15px';
-    element.style.display = 'inline-block';
-    element.style.margin = '3px';
+// 文字列に応じてスタイル（帯の色と文字色）を適用する
+function applyStyle(element, text) {
+  element.style.background = 'transparent';
+  element.style.color = 'white';
+  element.style.padding = '20px 40px';
+  if (!text) return;
+  for (const [key, bg, fg] of STYLE_RULES) {
+    if (text.includes(key)) {
+      element.style.background = bg;
+      element.style.color = fg;
+      return;
+    }
   }
-  
-  element.style.backgroundColor = bgColor;
-  element.style.color = textColor;
 }
