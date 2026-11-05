@@ -257,7 +257,7 @@
       "FEEL DEEP", "FEEL Deep2", "FEEL HIGH", "FEEL HIGH2", "FEEL NOW B1", "FEEL NOW B2", "FEEL NOW B3", "FEEL NOW B4", "FEEL NOW G1", "FEEL NOW G2",
       "FEEL NOW G3", "FEEL NOW S1", "FEEL NOW S2", "FEEL NOW S3",
       "L 24 FEEL", "L 24 FEEL2", "L 24 FREE", "L 24 FREE2", "L 25 BTM", "L 25 FEEL", "L 25 FREE",
-      "8th SP", "9th SP1", "9th SP2", "10th SP", "BEERCYCLE", "SKRILLEX", "BB2 SAM FELDT",
+      "8th SP", "9th SP1", "9th SP2", "10th SP", "BEERCYCLE", "SKRILLEX"
     ];
     
     // 名前順に並べ替え
@@ -358,10 +358,26 @@
     };
 
     // ===== 司会者スマホ（remote.html）からの操作 =====
+    // リモコンからの連続抽選（テスト用）の残り回数
+    let pendingDraws = 0;
+
+    function queueDraws(n) {
+      pendingDraws += n;
+      runDrawQueue();
+    }
+
+    function runDrawQueue() {
+      if (isAnimating || pendingDraws <= 0) return;
+      pendingDraws--;
+      if (availableCandidates.length === 0) pendingDraws = 0;
+      performDraw();
+    }
+
     function setHostStatus() {
       db.ref('remote/host').update({
         online: true,
         drawing: isAnimating,
+        queued: pendingDraws,
         remaining: availableCandidates.length,
         total: candidates.length
       });
@@ -379,7 +395,10 @@
       let remoteReady = false;
       db.ref('remote/drawRequest').on('value', snap => {
         if (!remoteReady) { remoteReady = true; return; }
-        if (snap.val()) performDraw();
+        const req = snap.val();
+        if (!req) return;
+        const n = Math.min(Math.max(parseInt(req.count, 10) || 1, 1), 50);
+        queueDraws(n);
       });
     }
 
@@ -555,6 +574,8 @@
         updateFirebase(finalResult);
         isAnimating = false;
         setHostStatus();
+        // 連続抽選の途中なら、結果を少し見せてから次へ
+        if (pendingDraws > 0) setTimeout(runDrawQueue, 700);
         // 最後の1つ：alertだとタブレットの操作が必要になるので画面表示にする
         if (availableCandidates.length === 0) {
           setTimeout(() => {
