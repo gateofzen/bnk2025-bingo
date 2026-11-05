@@ -34,6 +34,12 @@
     }
     #drawButton:active:not(:disabled) { transform: scale(0.95); background: rgba(255,255,255,0.2); }
     #drawButton:disabled { opacity: 0.3; }
+    #testButton {
+      margin-top: 16px; padding: 10px 22px; border-radius: 8px;
+      border: 2px dashed #e0a030; background: transparent; color: #e0a030;
+      font-family: Arial, sans-serif; font-size: 1rem; font-weight: bold;
+    }
+    #testButton:disabled { opacity: 0.3; }
     #historyTitle { margin-top: 26px; color: #aaa; font-size: 0.9rem; }
     #historyList { list-style: none; padding: 0; margin: 8px 0 0; }
     #historyList li { font-size: 1.1rem; }
@@ -45,6 +51,8 @@
   <div id="resultArea"><span id="result"></span></div>
   <div id="remaining"></div>
   <button id="drawButton" disabled>DRAW</button>
+  <!-- テスト用：URLの末尾に ?test を付けて開いたときだけ表示 -->
+  <button id="testButton" disabled hidden>TEST ×10</button>
   <div id="historyTitle">Past Results:</div>
   <ul id="historyList"></ul>
   <a id="cardLink" href="./index.html" target="_blank">自分のビンゴカードを開く</a>
@@ -68,6 +76,10 @@
     const remainingEl = document.getElementById('remaining');
     const drawButton = document.getElementById('drawButton');
     const historyList = document.getElementById('historyList');
+    const testButton = document.getElementById('testButton');
+    const TEST_MODE = new URLSearchParams(location.search).has('test');
+    const TEST_COUNT = 10;
+    if (TEST_MODE) testButton.hidden = false;
 
     let connected = false;
     let host = null;
@@ -84,6 +96,7 @@
       }
 
       const drawing = !!(host && host.drawing);
+      const queued = (host && host.queued) || 0;
       if (drawing) {
         resultEl.textContent = 'DRAWING...';
         applyStyle(resultEl, '');
@@ -98,6 +111,7 @@
 
       if (host && typeof host.remaining === 'number') {
         remainingEl.textContent = host.remaining === 0 ? 'ALL COMPLETED' : 'Remaining: ' + host.remaining + ' / ' + host.total;
+        if (queued > 0) remainingEl.textContent += '  (TEST: ' + queued + ' more)';
       }
 
       historyList.innerHTML = '';
@@ -108,8 +122,9 @@
         historyList.appendChild(li);
       });
 
-      const canDraw = connected && host && host.online && !drawing && !waiting && host.remaining !== 0;
+      const canDraw = connected && host && host.online && !drawing && !queued && !waiting && host.remaining !== 0;
       drawButton.disabled = !canDraw;
+      testButton.disabled = !canDraw;
     }
 
     db.ref('.info/connected').on('value', s => { connected = s.val() === true; render(); });
@@ -124,16 +139,23 @@
       render();
     });
 
-    drawButton.addEventListener('click', () => {
-      if (drawButton.disabled) return;
+    function requestDraw(count) {
       waiting = true;
       render();
       db.ref('remote/drawRequest').set({
         id: Math.random().toString(36).slice(2),
+        count: count,
         at: firebase.database.ServerValue.TIMESTAMP
       });
       // 応答がなければ5秒後に再び押せるようにする
       setTimeout(() => { waiting = false; render(); }, 5000);
+    }
+
+    drawButton.addEventListener('click', () => {
+      if (!drawButton.disabled) requestDraw(1);
+    });
+    testButton.addEventListener('click', () => {
+      if (!testButton.disabled) requestDraw(TEST_COUNT);
     });
 
     function applyStyle(element, text, isHistoryItem = false) {
